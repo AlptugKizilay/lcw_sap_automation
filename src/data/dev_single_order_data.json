@@ -1,0 +1,59 @@
+
+[
+    {
+        "orderType": "set",
+        "styleName": "TKM,SHADOW1-M",
+        "po_no": "1288469",
+        "MAGK": "CU1E",
+        "season": "W6",
+        "plm_code": 1134681,
+        "special_code": "W68263Z1",
+        "fob_price_usd": 5.9,
+        "fob_price_egp": 286.15,
+        "order_color_code": [
+            "CVL"
+        ],
+        "sizes": [
+            "3y-4y",
+            "4y-5y",
+            "5y-6y",
+            "6y-7y",
+            "7y-8y"
+        ],
+        "selected_size_sequence_numbers": [
+            "5",
+            "7",
+            "9",
+            "10",
+            "13"
+        ],
+        "productDefiniton": "Hırka",
+        "sap_product_code_main": "11000",
+        "isPrinted": false,
+        "size_group": "COCUK",
+        "sale_group": "#magk göre belirlenecek#",
+        "exfactoryDate": null,
+        "childrens": [
+            {
+                "plm_code": 1134684,
+                "componentColor": [
+                    "CVL"
+                ],
+                "productDefiniton": "Hırka",
+                "sapProductCode": "11000",
+                "isPrinted": false,
+                "price_egp": 143.07
+            },
+            {
+                "plm_code": 1134691,
+                "componentColor": [
+                    "LU7"
+                ],
+                "productDefiniton": "T-Shirt",
+                "sapProductCode": "16000",
+                "isPrinted": false,
+                "price_egp": 143.07
+            }
+        ]
+    }
+] 

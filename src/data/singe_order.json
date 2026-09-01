@@ -1,0 +1,39 @@
+
+
+  [
+    {
+        "orderType": "single",
+        "styleName": "KK.TSH,V-MERFER-SET-EG",
+        "po_no": "1268972",
+        "MAGK": "BUL",
+        "season": "S6",
+        "plm_code": 1119186,
+        "special_code": "S6M903Z8",
+        "fob_price_usd": 3.85,
+        "fob_price_egp": 186.72,
+        "order_color_code": [
+            "R9J",
+            "RFH"
+        ],
+        "sizes": [
+            "2XL",
+            "L",
+            "M",
+            "S",
+            "XL"
+        ],
+        "selected_size_sequence_numbers": [
+            "8",
+            "5",
+            "4",
+            "3",
+            "6"
+        ],
+        "productDefiniton": "Polo Yaka Tshirt",
+        "sapProductCode": "16000",
+        "isPrinted": false,
+        "size_group": "BUYUK_S-M-L",
+        "sale_group": "#magk göre belirlenecek#",
+        "exfactoryDate": null
+    }
+]

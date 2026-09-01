@@ -1,0 +1,4 @@
+pandas
+requests
+playwright
+pywin32 # win32com.client kullanıyorsanız bu da gerekebilir

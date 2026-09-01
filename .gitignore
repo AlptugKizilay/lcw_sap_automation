@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# PyInstaller / Build outputs
+build/
+dist/
+*.spec.bak
+
+# Chromium binaries & browser downloads
+browsers/
+
+# Local cache & logs & outputs
+cache/
+json_output/
+*.log
+config.json
+data/material_cache.json
+LCW_Automation_Outputs/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
