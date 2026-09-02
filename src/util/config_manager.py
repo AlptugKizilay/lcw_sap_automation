@@ -3,6 +3,7 @@ import keyring
 import os
 
 APP_NAME = "LCW_Automation_2026"
+APP_VERSION = "1.0.0"
 
 class ConfigManager:
     CONFIG_DIR = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), APP_NAME)
@@ -17,6 +18,11 @@ class ConfigManager:
     OUTPUT_EXCEL_DIR = os.path.join(DOCUMENTS_DIR, "LCW_Automation_Outputs")
 
     DEFAULTS = {
+        # --- UYGULAMA VE GÜNCELLEME AYARLARI ---
+        "APP_VERSION": APP_VERSION,
+        "UPDATE_CHECK_URL": "https://raw.githubusercontent.com/AlptugKizilay/lcw_sap_automation/main/version.json",
+        "AUTO_UPDATE_ENABLED": True,
+
         # --- LCW TEDARİKÇİ PORTALI AYARLARI ---
         "LCW_LOGIN_URL": "https://supplierportal.lcwaikiki.com/home",
         "LCW_TOKEN_API_ENDPOINT_PART": "/sts/issue/oidc/",

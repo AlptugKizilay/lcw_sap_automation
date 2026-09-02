@@ -9,6 +9,9 @@ import shutil
 import subprocess
 from PIL import Image, ImageDraw # ImageDraw eklendi!
 
+from src.util.config_manager import APP_VERSION
+from src.util.update_manager import UpdateManager
+
 # Görev çubuğunda doğru ikonu göstermek için AppUserModelID ayarı
 myappid = 'lcw.sap.automation.v2' 
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -19,26 +22,6 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
-
-def ensure_local_execution():
-    if not getattr(sys, 'frozen', False): return
-    network_exe_path = sys.executable
-    network_dir = os.path.dirname(network_exe_path)
-    exe_name = os.path.basename(network_exe_path)
-    local_app_dir = os.path.join(os.environ.get('LOCALAPPDATA'), "LCW_Automation_App")
-    local_exe_path = os.path.join(local_app_dir, exe_name)
-    if local_app_dir.lower() in network_exe_path.lower(): return
-    if not os.path.exists(local_exe_path) or os.path.getmtime(network_exe_path) > os.path.getmtime(local_exe_path):
-        try:
-            if not os.path.exists(local_app_dir): os.makedirs(local_app_dir)
-            for item in os.listdir(network_dir):
-                s = os.path.join(network_dir, item); d = os.path.join(local_app_dir, item)
-                if os.path.isdir(s):
-                    if os.path.exists(d): shutil.rmtree(d, ignore_errors=True)
-                    shutil.copytree(s, d)
-                else: shutil.copy2(s, d)
-        except: return
-    subprocess.Popen([local_exe_path] + sys.argv[1:]); sys.exit(0)
 
 # --- YENİ EKLENEN GÖRSEL YUMUŞATMA FONKSİYONU ---
 def make_image_rounded(image_path, radius):
@@ -118,7 +101,7 @@ class LCWAutomationApp(ctk.CTk):
                 
         # --- 4. FOOTER ---
         self.version_label = ctk.CTkLabel(
-            self.sidebar_frame, text="v2.0", 
+            self.sidebar_frame, text=f"v{APP_VERSION}", 
             font=ctk.CTkFont(size=10, weight="bold"), text_color="#52525b"
         )
         self.version_label.grid(row=4, column=0, sticky="s", pady=20)
@@ -135,6 +118,9 @@ class LCWAutomationApp(ctk.CTk):
             "settings": SettingsPage(self.content_frame, fg_color="transparent")            
         }
         self.show_dashboard()
+
+        # Otomatik güncelleme kontrolünü başlat (1.5 saniye sonra)
+        self.after(1500, lambda: UpdateManager.check_for_updates_async(self))
 
     def load_assets(self):
         home_path = resource_path(os.path.join("assets", "home.png"))
@@ -194,6 +180,5 @@ class LCWAutomationApp(ctk.CTk):
             self.pages["accessory"].auto_load_po(active_po)
 
 if __name__ == "__main__":
-    ensure_local_execution()
     app = LCWAutomationApp()
     app.mainloop()
