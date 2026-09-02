@@ -94,8 +94,9 @@ def _fill_variant_matrix_grid(session: Any, main_order_data: Dict[str, Any], var
         # Seçimi temizle
         session.findById(table_id).getAbsoluteRow(target_index).selected = False
         
-def create_bom_for_set_order(session: Any, main_order_data: Dict[str, Any]) -> bool:
+def handle_cs01_for_set_order(session: Any, main_order_data: Dict[str, Any]) -> bool:
     """
+    Set siparişleri için CS01 ekranında (BOM oluşturma) gerekli adımları gerçekleştirir.
     Ana ürünün BOM'unu oluşturur ve çocuk ürünlerini bileşen olarak ekler.
     
     Args:
@@ -205,3 +206,5 @@ def create_bom_for_set_order(session: Any, main_order_data: Dict[str, Any]) -> b
     except Exception as e:
         logger.error(_("LOG_CS01_ERROR", error=e), exc_info=True)
         raise # Hatayı yukarıya fırlat ki workflow durdurulsun
+
+create_bom_for_set_order = handle_cs01_for_set_order
