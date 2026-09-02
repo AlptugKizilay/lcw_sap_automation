@@ -410,7 +410,7 @@ class AccessoryPage(ctk.CTkFrame):
         for row_idx in selected_rows:
             self.sheet.delete_row(row_idx)
             
-        logger.info("Accessory: Seçili satırlar sheet üzerinden silindi.")
+        logger.info(_("LOG_ACCESSORY_DELETED"))
 
     def export_to_excel(self):
         """Sheet üzerindeki verileri CSV olarak kaydeder"""

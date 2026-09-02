@@ -201,7 +201,7 @@ class DashboardPage(ctk.CTkFrame):
             
     def stop_automation_action(self):
         if AutomationState.force_stop():
-            logger.info("Otomasyon kullanıcı tarafından anında kesildi.")
+            logger.info(_("LOG_PROCESS_STOPPED"))
             
             # GUI Elemanlarını Sıfırla
             self.btn_run_selected.configure(state="normal", text=_("START_SELECTED_STEPS"))
@@ -212,7 +212,7 @@ class DashboardPage(ctk.CTkFrame):
             if hasattr(self, 'progress_bar'):
                 self.progress_bar.set(0)
         else:
-            logger.info("Şu an durdurulacak aktif bir süreç bulunamadı.")      
+            logger.info(_("LOG_NO_ACTIVE_PROCESS"))      
 
     def run_automation_action(self):
         po = self.po_entry.get().strip()
@@ -360,30 +360,23 @@ class DashboardPage(ctk.CTkFrame):
         # 1. PO Numarasını Al ve Kontrol Et
         po = self.po_entry.get().strip()
         if not po:
-            logger.warning("PO numarası boş olamaz!")
-            # İstersen burada bir uyarı penceresi de açabilirsin:
-            # messagebox.showwarning("Hata", "Lütfen bir PO numarası giriniz.")
+            logger.warning(_("LOG_PO_EMPTY"))
             return
 
         # 2. Seçili Checkbox'ları Topla
-        # self.step_vars sözlüğündeki BooleanVar'ları kontrol ediyoruz
         selected_steps = [sid for sid, var in self.step_vars.items() if var.get()]
         
         if not selected_steps:
-            logger.warning("Çalıştırılacak hiçbir adım seçilmedi!")
+            logger.warning(_("LOG_NO_STEPS_SELECTED"))
             return
 
         # 3. Kullanıcıya Bilgi Ver
-        logger.info(f"[MODÜLER AKIŞ] Başlatılıyor...")
-        logger.info(f"Hedef PO: {po}")
-        logger.info(f"Seçili Adımlar: {selected_steps}")
+        logger.info(_("LOG_MODULAR_START_PREFIX"))
+        logger.info(_("LOG_TARGET_PO_PREFIX", po=po))
+        logger.info(_("LOG_SELECTED_STEPS_PREFIX", steps=selected_steps))
 
         # 4. Butonları Geçici Olarak Devre Dışı Bırak (Çakışmayı önlemek için)
-        #self.btn_run_selected.configure(state="disabled", text="ROBOT ÇALIŞIYOR...")
-        #self.btn_template.configure(state="disabled")
-
         # 5. Arka Planda (Thread) Modüler Akışı Başlat
-        # LogicBridge içindeki execute_modular_workflow metodunu çağırıyoruz
         self.run_in_thread(
             self.bridge.execute_modular_workflow, 
             po, 
@@ -392,7 +385,7 @@ class DashboardPage(ctk.CTkFrame):
     def load_cache_action(self):
         po = self.po_entry.get().strip()
         if not po:
-            logger.warning("Lütfen önce bir PO numarası giriniz!")
+            logger.warning(_("LOG_PLEASE_ENTER_PO"))
             return
 
         # Bridge üzerinden cache kontrolü yap
@@ -400,10 +393,10 @@ class DashboardPage(ctk.CTkFrame):
         order_name = self.bridge.check_cache_and_get_orderName(po)
 
         if order_type:
-            logger.info(f"[CACHE] {po} için yerel veri bulundu. Adımlar yükleniyor...")
+            logger.info(_("CACHE_FOUND_LOADING", po=po))
             self.draw_workflow_steps(order_type, po, order_name)
         else:
-            logger.error(f"[CACHE] {po} için yerel veri bulunamadı! Lütfen önce 'Create Excel Template' yapınız.")
+            logger.error(_("CACHE_NOT_FOUND", po=po))
             
     # DURUM GÜNCELLEME METODU (Bridge tarafından çağrılacak)
     def update_ui_status(self, step_id, status, progress_val=None):

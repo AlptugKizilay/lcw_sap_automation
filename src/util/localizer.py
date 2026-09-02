@@ -173,6 +173,15 @@ TRANSLATIONS = {
         "TARGET_PO_LOG": "Hedef PO: {po_no}",
         "SAP_LOGIN_ERROR_BRIDGE": "SAP bağlantısı kurulamadı! Lütfen SAP Logon'un açık olduğundan emin olun.",
         "SAP_LANG_MISMATCH": "SAP Dil Uyumsuzluğu: Uygulama dili '{app_lang}' seçili, ancak açık olan SAP oturumunun dili '{sap_lang}'. Lütfen SAP oturumunu kapatıp '{app_lang}' diliyle giriş yapın veya Uygulama Ayarları'ndan dili değiştirin.",
+        "LOG_PROCESS_STOPPED": "Otomasyon kullanıcı tarafından anında kesildi.",
+        "LOG_NO_ACTIVE_PROCESS": "Şu an durdurulacak aktif bir süreç bulunamadı.",
+        "LOG_PO_EMPTY": "PO numarası boş olamaz!",
+        "LOG_NO_STEPS_SELECTED": "Çalıştırılacak hiçbir adım seçilmedi!",
+        "LOG_MODULAR_START_PREFIX": "[MODÜLER AKIŞ] Başlatılıyor...",
+        "LOG_TARGET_PO_PREFIX": "Hedef PO: {po}",
+        "LOG_SELECTED_STEPS_PREFIX": "Seçili Adımlar: {steps}",
+        "LOG_PLEASE_ENTER_PO": "Lütfen önce bir PO numarası giriniz!",
+        "LOG_ACCESSORY_DELETED": "Accessory: Seçili satırlar sheet üzerinden silindi.",
         
         # --- SAP Screen & Flow Log Statements ---
         "LOG_SINGLE_FLOW_START": "--- Tekli Sipariş Otomasyon Akışı Başlatılıyor: {po_no} ---",
@@ -414,6 +423,15 @@ TRANSLATIONS = {
         "TARGET_PO_LOG": "Target PO: {po_no}",
         "SAP_LOGIN_ERROR_BRIDGE": "SAP connection failed! Please make sure SAP Logon is open.",
         "SAP_LANG_MISMATCH": "SAP Language Mismatch: Application language is set to '{app_lang}', but active SAP session language is '{sap_lang}'. Please close the SAP session and log in with '{app_lang}' language, or change the language from Application Settings.",
+        "LOG_PROCESS_STOPPED": "Automation stopped immediately by user.",
+        "LOG_NO_ACTIVE_PROCESS": "No active process found to stop.",
+        "LOG_PO_EMPTY": "PO number cannot be empty!",
+        "LOG_NO_STEPS_SELECTED": "No steps selected to run!",
+        "LOG_MODULAR_START_PREFIX": "[MODULAR FLOW] Starting...",
+        "LOG_TARGET_PO_PREFIX": "Target PO: {po}",
+        "LOG_SELECTED_STEPS_PREFIX": "Selected Steps: {steps}",
+        "LOG_PLEASE_ENTER_PO": "Please enter a PO number first!",
+        "LOG_ACCESSORY_DELETED": "Accessory: Selected rows deleted from sheet.",
 
         # --- SAP Screen & Flow Log Statements ---
         "LOG_SINGLE_FLOW_START": "--- Starting Single Order Automation Flow: {po_no} ---",
