@@ -6,7 +6,7 @@ import time
 import os
 from src.file_management.excel_reader import read_variant_values_from_excel
 from src.util.config_manager import ConfigManager
-from src.util.localizer import get_unit_symbol
+from src.util.localizer import _, get_unit_symbol
 
 logger = logging.getLogger(__name__)
 def get_plm_based_counts(color_data):
@@ -94,16 +94,15 @@ def _fill_variant_matrix_grid(session: Any, main_order_data: Dict[str, Any], var
         # Seçimi temizle
         session.findById(table_id).getAbsoluteRow(target_index).selected = False
         
-def handle_cs01_for_set_order(session: Any, main_order_data: Dict[str, Any]):
+def create_bom_for_set_order(session: Any, main_order_data: Dict[str, Any]) -> bool:
     """
-    Set siparişleri için CS01 ekranında (BOM oluşturma) gerekli adımları gerçekleştirir.
     Ana ürünün BOM'unu oluşturur ve çocuk ürünlerini bileşen olarak ekler.
     
     Args:
         session (Any): SAP GUI Scripting session objesi.
         main_order_data (Dict[str, Any]): Ana set sipariş verisi (JSON formatında).
     """
-    logger.info("CS01: Set siparişi için BOM oluşturma adımı başlatılıyor.")
+    logger.info(_("LOG_CS01_SET_BOM_START"))
     style_name = main_order_data.get("styleName")
     plm_id = main_order_data.get("plm_code")
     file_name = f"{style_name}_BOM_Template_{plm_id}.xlsx"
@@ -123,11 +122,11 @@ def handle_cs01_for_set_order(session: Any, main_order_data: Dict[str, Any]):
     childrens = main_order_data.get("childrens", [])
 
     if not main_material_code:
-        logger.error("CS01: Ana malzeme kodu (main_material_code) bulunamadı. BOM oluşturulamıyor.")
+        logger.error(_("LOG_CS01_MAIN_MAT_NOT_FOUND"))
         raise ValueError("Ana malzeme kodu eksik.")
     
     if not childrens:
-        logger.error("CS01: Çocuk ürünleri (childrens) bulunamadı. BOM oluşturulamıyor.")
+        logger.error(_("LOG_CS01_CHILDREN_NOT_FOUND"))
         raise ValueError("Çocuk ürünleri eksik.")
 
     # Her çocuğun SAP malzeme kodunun çekildiğinden emin olalım
@@ -140,7 +139,6 @@ def handle_cs01_for_set_order(session: Any, main_order_data: Dict[str, Any]):
     try:
         session.findById("wnd[0]").maximize()
         session.startTransaction("CS01")
-        logger.info("CS01: SAP penceresi maksimize edildi.")
 
         # CS01 ekranına giriş bilgileri
         session.findById("wnd[0]/usr/ctxtRC29N-MATNR").text = main_material_code
@@ -150,7 +148,7 @@ def handle_cs01_for_set_order(session: Any, main_order_data: Dict[str, Any]):
         session.findById("wnd[0]/usr/txtRC29N-STLAL").setFocus()
         session.findById("wnd[0]/usr/txtRC29N-STLAL").caretPosition = 1
         session.findById("wnd[0]").sendVKey(0) # Enter
-        logger.info(f"CS01: Ana malzeme kodu '{main_material_code}' ve diğer BOM bilgileri girildi.")
+        logger.info(_("LOG_CS01_MAIN_MAT_ENTERED", mat_code=main_material_code))
         time.sleep(1.5) # Ekranın yüklenmesini bekle
 
         # Tabloya çocuk ürünlerini ekle
@@ -163,7 +161,7 @@ def handle_cs01_for_set_order(session: Any, main_order_data: Dict[str, Any]):
             child_menge = comp_piece_counter.get(child_plm, 1)
             
 
-            logger.info(f"CS01: Çocuk PLM {child_plm} (Malzeme: {child_material_code}) için BOM satırı ekleniyor. MENGE: {child_menge}")
+            logger.info(_("LOG_CS01_CHILD_ROW_ADDING", plm=child_plm, mat_code=child_material_code, qty=child_menge))
 
             try:
                 # Hücrelere doğrudan erişim: [Sütun_Adı, Satır_İndeksi]
@@ -192,20 +190,18 @@ def handle_cs01_for_set_order(session: Any, main_order_data: Dict[str, Any]):
             
         # Tüm satırlar girildikten sonra Enter ile onayla
         session.findById("wnd[0]").sendVKey(0) # Enter
-        logger.info("CS01: Tüm BOM satırları girildi ve Enter tuşuna basıldı.")
+        logger.info(_("LOG_CS01_ALL_ROWS_ENTERED"))
         time.sleep(1) # Ekranın yüklenmesini bekle
         
         # --- ADIM 2: Matris Görünümünü Doldur (Yeni Modüler Fonksiyon) ---
         _fill_variant_matrix_grid(session, main_order_data, variant_data, row_mapping)
 
-        logger.info("CS01: Set siparişi işlemleri başarıyla tamamlandı.")
-
         session.findById("wnd[0]/tbar[0]/btn[11]").press()
-        logger.info("CS01: BOM kaydedildi.")
+        logger.info(_("LOG_CS01_BOM_SAVED"))
         time.sleep(1) # Kayıt işleminin tamamlanmasını bekle
 
-        logger.info("CS01: Set siparişi için BOM oluşturma adımı başarıyla tamamlandı.")
+        logger.info(_("LOG_CS01_BOM_SET_SUCCESS"))
         return True
     except Exception as e:
-        logger.error(f"CS01: Set siparişi için BOM oluşturulurken hata oluştu: {e}", exc_info=True)
+        logger.error(_("LOG_CS01_ERROR", error=e), exc_info=True)
         raise # Hatayı yukarıya fırlat ki workflow durdurulsun

@@ -174,6 +174,70 @@ TRANSLATIONS = {
         "SAP_LOGIN_ERROR_BRIDGE": "SAP bağlantısı kurulamadı! Lütfen SAP Logon'un açık olduğundan emin olun.",
         "SAP_LANG_MISMATCH": "SAP Dil Uyumsuzluğu: Uygulama dili '{app_lang}' seçili, ancak açık olan SAP oturumunun dili '{sap_lang}'. Lütfen SAP oturumunu kapatıp '{app_lang}' diliyle giriş yapın veya Uygulama Ayarları'ndan dili değiştirin.",
         
+        # --- SAP Screen & Flow Log Statements ---
+        "LOG_SINGLE_FLOW_START": "--- Tekli Sipariş Otomasyon Akışı Başlatılıyor: {po_no} ---",
+        "LOG_SINGLE_FLOW_DONE": "🎉 TEBRİKLER: Tekli Sipariş {po_no} için TÜM süreçler başarıyla tamamlandı! ✅",
+        "LOG_SINGLE_FLOW_ERROR": "❌ HATA: Tekli Sipariş {po_no} iş akışında hata oluştu: {error}",
+        "LOG_SET_FLOW_START": "--- Set (Takım) Sipariş Otomasyon Akışı Başlatılıyor: {po_no} ---",
+        "LOG_SET_FLOW_DONE": "🎉 TEBRİKLER: Set Sipariş {po_no} için TÜM süreçler başarıyla tamamlandı! ✅",
+        "LOG_SET_FLOW_ERROR": "❌ HATA: Set Sipariş {po_no} iş akışında hata oluştu: {error}",
+        "LOG_STEP_START": ">>> ADIM {step_num}: {step_name} başlatılıyor...",
+        "LOG_STEP_SUCCESS": ">>> ADIM {step_num}: {step_name} BAŞARIYLA TAMAMLANDI. ✅",
+        
+        # --- ZMM0020 Handler Logs ---
+        "LOG_ZMM0020_GOTO": "ZMM0020: İşlem koduna gidiliyor: ZMM0020",
+        "LOG_ZMM0020_MODEL_VAR_START": "ZMM0020: 1. Adım - Model & Varyant Oluşturma başlatılıyor.",
+        "LOG_ZMM0020_MODEL_VAR_DONE": "ZMM0020: 1. Adım - Model & Varyant Oluşturma tamamlandı.",
+        "LOG_ZMM0020_WORKPLAN_START": "ZMM0020: 2. Adım - İş Planı Oluşturma başlatılıyor.",
+        "LOG_ZMM0020_WORKPLAN_DONE": "ZMM0020: 2. Adım - İş Planı Oluşturma tamamlandı.",
+        "LOG_ZMM0020_BOM_START": "ZMM0020: 3. Adım - BOM Yükleme başlatılıyor.",
+        "LOG_ZMM0020_BOM_DONE": "ZMM0020: 3. Adım - BOM Yükleme tamamlandı.",
+        "LOG_ZMM0020_COSTING_START": "ZMM0020: 4. Adım - Versiyon & Maliyet Hesaplama başlatılıyor.",
+        "LOG_ZMM0020_COSTING_DONE": "ZMM0020: 4. Adım - Versiyon & Maliyet Hesaplama tamamlandı.",
+        "LOG_ZMM0020_ALV_LOADED": "ALV verileri yüklendi. Satır sayısı: {count}",
+        "LOG_ZMM0020_ALV_TIMEOUT": "Zaman aşımı! ALV verileri {timeout} saniye içinde yüklenmedi.",
+        
+        # --- CS01 Handler Logs ---
+        "LOG_CS01_MATRIX_START": "CS01: Varyant matrisi doldurma işlemi başlatılıyor.",
+        "LOG_CS01_SET_BOM_START": "CS01: Set siparişi için BOM oluşturma adımı başlatılıyor.",
+        "LOG_CS01_MAIN_MAT_NOT_FOUND": "CS01: Ana malzeme kodu bulunamadı. BOM oluşturulamıyor.",
+        "LOG_CS01_CHILDREN_NOT_FOUND": "CS01: Çocuk ürünleri bulunamadı. BOM oluşturulamıyor.",
+        "LOG_CS01_MAIN_MAT_ENTERED": "CS01: Ana malzeme kodu '{mat_code}' ve diğer BOM bilgileri girildi.",
+        "LOG_CS01_CHILD_ROW_ADDING": "CS01: Çocuk PLM {plm} (Malzeme: {mat_code}) için BOM satırı ekleniyor. Miktar: {qty}",
+        "LOG_CS01_ALL_ROWS_ENTERED": "CS01: Tüm BOM satırları girildi ve Enter tuşuna basıldı.",
+        "LOG_CS01_BOM_SAVED": "CS01: BOM başarıyla kaydedildi.",
+        "LOG_CS01_BOM_SET_SUCCESS": "CS01: Set siparişi için BOM oluşturma adımı başarıyla tamamlandı.",
+        "LOG_CS01_ERROR": "CS01: Set siparişi için BOM oluşturulurken hata oluştu: {error}",
+        
+        # --- MD01N Handler Logs ---
+        "LOG_MD01N_START": "MD01N: MRP Live çalıştırma işlemi başlatılıyor.",
+        "LOG_MD01N_MATERIALS_COUNT": "MD01N: Toplam {count} malzeme listeye giriliyor.",
+        "LOG_MD01N_EXECUTING": "MD01N: MRP Live yürütülüyor...",
+        "LOG_MD01N_DONE": "MD01N: MRP Live işlemi tamamlandı.",
+        "LOG_MD01N_SINGLE_START": "MD01N: MRP Çalıştırılıyor. Malzeme: {mat_code}, Üretim Yeri: {plant}",
+        "LOG_MD01N_SINGLE_DONE": "MD01N: {mat_code} için MRP başarıyla tamamlandı.",
+        "LOG_MD01N_ERROR": "MD01N Hatası: {error}",
+        
+        # --- Common Actions & SAP Logs ---
+        "LOG_SAP_SAVE_START": "SAP Ekranı: Kaydetme işlemi başlatılıyor (btn[11]).",
+        "LOG_SAP_SAVE_SUCCESS": "SAP Ekranı: Kaydetme işlemi başarıyla tamamlandı. Mesaj: {msg}",
+        "LOG_SAP_SAVE_FAILED": "SAP Ekranı: Kaydetme işlemi başarısız oldu. Hata Mesajı: {msg}",
+        "LOG_SAP_SAVE_TIMEOUT": "SAP Ekranı: Kaydetme işlemi {timeout} saniye içinde tamamlanmadı.",
+        "LOG_SAP_STATUS_BAR": "SAP Durum Çubuğu Mesajı: [{msg_type}] {text}",
+        "LOG_SAP_MODE": "SAP Ekranı: Mevcut mod '{mode}'.",
+        "LOG_SAP_MODE_ALREADY_CHANGE": "SAP Ekranı zaten 'Değiştir' modunda.",
+        "LOG_SAP_SWITCHING_CHANGE": "SAP Ekranı 'Görüntüle' modunda. 'Değiştir' moduna geçiliyor.",
+        "LOG_SAP_SWITCHED_CHANGE": "SAP Ekranı başarıyla 'Değiştir' moduna geçti.",
+        "LOG_SAP_POPUP_OK": "Genel SAP pop-up 'Tamam' butonuna basıldı.",
+        
+        # --- ZMM0170 & ZPP0030 & ZSD0010 Logs ---
+        "LOG_ZMM0170_START": "ZMM0170: Malzeme durum kontrolü başlatılıyor...",
+        "LOG_ZMM0170_DONE": "ZMM0170: Malzeme durum kontrolü tamamlandı.",
+        "LOG_ZPP0030_START": "ZPP0030: Üretim siparişi kontrolü başlatılıyor...",
+        "LOG_ZPP0030_DONE": "ZPP0030: Üretim siparişi kontrolü tamamlandı.",
+        "LOG_ZSD0010_START": "ZSD0010: Satış siparişi kontrolü başlatılıyor...",
+        "LOG_ZSD0010_DONE": "ZSD0010: Satış siparişi kontrolü tamamlandı.",
+        
         # --- Excel Generator Instruction text ---
         "EXCEL_INSTRUCTIONS": (
             "Ürün Ağacı (BOM) Şablonu Talimatları:\n\n"
@@ -314,6 +378,70 @@ TRANSLATIONS = {
         "TARGET_PO_LOG": "Target PO: {po_no}",
         "SAP_LOGIN_ERROR_BRIDGE": "SAP connection failed! Please make sure SAP Logon is open.",
         "SAP_LANG_MISMATCH": "SAP Language Mismatch: Application language is set to '{app_lang}', but active SAP session language is '{sap_lang}'. Please close the SAP session and log in with '{app_lang}' language, or change the language from Application Settings.",
+
+        # --- SAP Screen & Flow Log Statements ---
+        "LOG_SINGLE_FLOW_START": "--- Starting Single Order Automation Flow: {po_no} ---",
+        "LOG_SINGLE_FLOW_DONE": "🎉 CONGRATULATIONS: ALL processes completed successfully for Single Order {po_no}! ✅",
+        "LOG_SINGLE_FLOW_ERROR": "❌ ERROR: Error occurred in Single Order {po_no} workflow: {error}",
+        "LOG_SET_FLOW_START": "--- Starting Set (Team) Order Automation Flow: {po_no} ---",
+        "LOG_SET_FLOW_DONE": "🎉 CONGRATULATIONS: ALL processes completed successfully for Set Order {po_no}! ✅",
+        "LOG_SET_FLOW_ERROR": "❌ ERROR: Error occurred in Set Order {po_no} workflow: {error}",
+        "LOG_STEP_START": ">>> STEP {step_num}: Starting {step_name}...",
+        "LOG_STEP_SUCCESS": ">>> STEP {step_num}: {step_name} COMPLETED SUCCESSFULLY. ✅",
+        
+        # --- ZMM0020 Handler Logs ---
+        "LOG_ZMM0020_GOTO": "ZMM0020: Navigating to transaction code: ZMM0020",
+        "LOG_ZMM0020_MODEL_VAR_START": "ZMM0020: Step 1 - Variant & Model Creation starting.",
+        "LOG_ZMM0020_MODEL_VAR_DONE": "ZMM0020: Step 1 - Variant & Model Creation completed.",
+        "LOG_ZMM0020_WORKPLAN_START": "ZMM0020: Step 2 - Work Plan Creation starting.",
+        "LOG_ZMM0020_WORKPLAN_DONE": "ZMM0020: Step 2 - Work Plan Creation completed.",
+        "LOG_ZMM0020_BOM_START": "ZMM0020: Step 3 - BOM Loading starting.",
+        "LOG_ZMM0020_BOM_DONE": "ZMM0020: Step 3 - BOM Loading completed.",
+        "LOG_ZMM0020_COSTING_START": "ZMM0020: Step 4 - Version & Costing Calculation starting.",
+        "LOG_ZMM0020_COSTING_DONE": "ZMM0020: Step 4 - Version & Costing Calculation completed.",
+        "LOG_ZMM0020_ALV_LOADED": "ALV data loaded. Row count: {count}",
+        "LOG_ZMM0020_ALV_TIMEOUT": "Timeout! ALV data could not be loaded within {timeout} seconds.",
+        
+        # --- CS01 Handler Logs ---
+        "LOG_CS01_MATRIX_START": "CS01: Starting variant matrix filling process.",
+        "LOG_CS01_SET_BOM_START": "CS01: Starting BOM creation step for set order.",
+        "LOG_CS01_MAIN_MAT_NOT_FOUND": "CS01: Main material code not found. Cannot create BOM.",
+        "LOG_CS01_CHILDREN_NOT_FOUND": "CS01: Child products not found. Cannot create BOM.",
+        "LOG_CS01_MAIN_MAT_ENTERED": "CS01: Main material code '{mat_code}' and other BOM details entered.",
+        "LOG_CS01_CHILD_ROW_ADDING": "CS01: Adding BOM row for Child PLM {plm} (Material: {mat_code}). Quantity: {qty}",
+        "LOG_CS01_ALL_ROWS_ENTERED": "CS01: All BOM rows entered and Enter key pressed.",
+        "LOG_CS01_BOM_SAVED": "CS01: BOM saved successfully.",
+        "LOG_CS01_BOM_SET_SUCCESS": "CS01: BOM creation step for set order completed successfully.",
+        "LOG_CS01_ERROR": "CS01: Error occurred while creating BOM for set order: {error}",
+        
+        # --- MD01N Handler Logs ---
+        "LOG_MD01N_START": "MD01N: Starting MRP Live execution process.",
+        "LOG_MD01N_MATERIALS_COUNT": "MD01N: Entering total {count} materials into list.",
+        "LOG_MD01N_EXECUTING": "MD01N: Executing MRP Live...",
+        "LOG_MD01N_DONE": "MD01N: MRP Live process completed.",
+        "LOG_MD01N_SINGLE_START": "MD01N: Executing MRP. Material: {mat_code}, Plant: {plant}",
+        "LOG_MD01N_SINGLE_DONE": "MD01N: MRP completed successfully for {mat_code}.",
+        "LOG_MD01N_ERROR": "MD01N Error: {error}",
+        
+        # --- Common Actions & SAP Logs ---
+        "LOG_SAP_SAVE_START": "SAP Screen: Starting save action (btn[11]).",
+        "LOG_SAP_SAVE_SUCCESS": "SAP Screen: Save action completed successfully. Message: {msg}",
+        "LOG_SAP_SAVE_FAILED": "SAP Screen: Save action failed. Error Message: {msg}",
+        "LOG_SAP_SAVE_TIMEOUT": "SAP Screen: Save action did not complete within {timeout} seconds.",
+        "LOG_SAP_STATUS_BAR": "SAP Status Bar Message: [{msg_type}] {text}",
+        "LOG_SAP_MODE": "SAP Screen: Current mode '{mode}'.",
+        "LOG_SAP_MODE_ALREADY_CHANGE": "SAP Screen is already in 'Change' mode.",
+        "LOG_SAP_SWITCHING_CHANGE": "SAP Screen is in 'Display' mode. Switching to 'Change' mode.",
+        "LOG_SAP_SWITCHED_CHANGE": "SAP Screen successfully switched to 'Change' mode.",
+        "LOG_SAP_POPUP_OK": "Generic SAP pop-up 'OK' button pressed.",
+        
+        # --- ZMM0170 & ZPP0030 & ZSD0010 Logs ---
+        "LOG_ZMM0170_START": "ZMM0170: Starting material status check...",
+        "LOG_ZMM0170_DONE": "ZMM0170: Material status check completed.",
+        "LOG_ZPP0030_START": "ZPP0030: Starting production order check...",
+        "LOG_ZPP0030_DONE": "ZPP0030: Production order check completed.",
+        "LOG_ZSD0010_START": "ZSD0010: Starting sales order check...",
+        "LOG_ZSD0010_DONE": "ZSD0010: Sales order check completed.",
 
         # --- Excel Generator Instruction text ---
         "EXCEL_INSTRUCTIONS": (

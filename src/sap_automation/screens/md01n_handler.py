@@ -2,6 +2,8 @@ import logging
 import time
 from typing import List, Any
 
+from src.util.localizer import _
+
 logger = logging.getLogger(__name__)
 
 def run_md01n_mrp(session: Any, main_material: str, children_materials: List[str], production_plant):
@@ -14,7 +16,7 @@ def run_md01n_mrp(session: Any, main_material: str, children_materials: List[str
         children_materials (List[str]): Çocuk ürünlerin SAP malzeme kodları listesi.
     """
     try:
-        logger.info("MD01N: MRP Live çalıştırma işlemi başlatılıyor.")
+        logger.info(_("LOG_MD01N_START"))
         session.startTransaction("MD01N")
         
         # 1. Seçenekleri ve Parametreleri Ayarla
@@ -39,7 +41,7 @@ def run_md01n_mrp(session: Any, main_material: str, children_materials: List[str
 
         # 3. Tüm Malzemeleri (Ana + Çocuklar) Listeye Ekle
         all_materials = [main_material] + children_materials
-        logger.info(f"MD01N: Toplam {len(all_materials)} malzeme listeye giriliyor.")
+        logger.info(_("LOG_MD01N_MATERIALS_COUNT", count=len(all_materials)))
 
         table_path = "wnd[1]/usr/tabsTAB_STRIP/tabpSIVA/ssubSCREEN_HEADER:SAPLALDB:3010/tblSAPLALDBSINGLE"
         
@@ -58,18 +60,18 @@ def run_md01n_mrp(session: Any, main_material: str, children_materials: List[str
         time.sleep(1)
 
         # 5. MRP'yi Yürüt (F8)
-        logger.info("MD01N: MRP Live yürütülüyor...")
+        logger.info(_("LOG_MD01N_EXECUTING"))
         session.findById("wnd[0]/tbar[1]/btn[8]").press()
         
         # MRP Live'ın tamamlanması zaman alabilir, durum çubuğunu veya ekranın değişmesini bekleyelim
         time.sleep(5) 
         
         # Sonuç ekranında bir hata veya özet var mı kontrol edilebilir
-        logger.info("MD01N: MRP Live işlemi tamamlandı.")
+        logger.info(_("LOG_MD01N_DONE"))
         return True
 
     except Exception as e:
-        logger.error(f"MD01N: MRP çalıştırılırken hata oluştu: {e}", exc_info=True)
+        logger.error(_("LOG_MD01N_ERROR", error=e), exc_info=True)
         return False
 
 def step_md01n_single_mrp(session, data, cache_file_path) -> bool:
@@ -83,10 +85,10 @@ def step_md01n_single_mrp(session, data, cache_file_path) -> bool:
         plant = data.get('sale_group') # Fiori'den gelen üretim yeri
         
         if not material_code:
-            logger.error("MD01N: Malzeme kodu (sap_material_code) bulunamadı!")
+            logger.error(_("LOG_MD01N_ERROR", error="Malzeme kodu eksik"))
             return False
 
-        logger.info(f"MD01N: MRP Çalıştırılıyor. Malzeme: {material_code}, Üretim Yeri: {plant}")
+        logger.info(_("LOG_MD01N_SINGLE_START", mat_code=material_code, plant=plant))
         time.sleep(2)
 
         # 2. Transaction'ı Başlat
@@ -116,15 +118,14 @@ def step_md01n_single_mrp(session, data, cache_file_path) -> bool:
         time.sleep(1.5)
         # handle_sap_popups fonksiyonunu burada kullanabiliriz
         if session.Children.Count > 1:
-            logger.info("MD01N: Onay pop-up'ı kapatılıyor.")
             session.findById("wnd[1]/tbar[0]/btn[0]").press() # Enter/Tamam
         
         # MRP'nin bitmesi için kısa bir bekleme (Arka plan işlemi değildir, ekranın dönmesini bekler)
         time.sleep(0.5)
         
-        logger.info(f"MD01N: {material_code} için MRP başarıyla tamamlandı.")
+        logger.info(_("LOG_MD01N_SINGLE_DONE", mat_code=material_code))
         return True
 
     except Exception as e:
-        logger.error(f"MD01N Hatası: {e}")
+        logger.error(_("LOG_MD01N_ERROR", error=e))
         return False

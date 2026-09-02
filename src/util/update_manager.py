@@ -167,3 +167,4 @@ class UpdateManager:
                 progress_dialog.after(0, lambda err=e: progress_label.configure(text=f"İndirme hatası: {err}"))
 
         threading.Thread(target=download_worker, daemon=True).start()
+

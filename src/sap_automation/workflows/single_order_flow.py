@@ -14,6 +14,7 @@ from src.util.config_manager import ConfigManager
 from src.util.update_json_cache import update_json_cache
 from src.util.handle_sap_popups import handle_sap_popups
 from src.sap_automation.screens.md01n_handler import step_md01n_single_mrp
+from src.util.localizer import _
 logger = logging.getLogger(__name__)
 cfg = ConfigManager()
 

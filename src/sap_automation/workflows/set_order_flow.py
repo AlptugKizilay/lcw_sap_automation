@@ -15,6 +15,7 @@ from src.sap_automation.screens.md01n_handler import run_md01n_mrp
 from src.sap_automation.screens.zpp0030_handler import zpp0030_process_production_orders
 from src.util.update_json_cache import update_json_cache
 from src.util.handle_sap_popups import handle_sap_popups
+from src.util.localizer import _
 logger = logging.getLogger(__name__)
 cfg = ConfigManager()
 MASTER_SET_SEQUENCE = ["ZMM0020", "CS01", "ZSD0010", "MD01N", "ZPP0030"]
