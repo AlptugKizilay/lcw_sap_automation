@@ -8,11 +8,13 @@ from src.file_management.excel_reader import read_variant_values_from_excel
 from src.util.config_manager import ConfigManager
 from src.util.localizer import _, get_unit_symbol
 
+import re
+
 logger = logging.getLogger(__name__)
 def get_plm_based_counts(color_data):
     """
     Belirli bir rengin verilerini alır ve PLM koduna göre adetleri toplar.
-    Giriş: {"Şort-1048625-JM3": 1, "Şort-1048625-R93": 1, "Sweat-1048626-QVK": 1, "TOTAL_PIECES": 2}
+    Giriş: {"T-Shirt-1048625-JM3": 1, "Şort-1048625-R93": 1, "Sweat-1048626-QVK": 1, "TOTAL_PIECES": 2}
     Çıkış: {'1048625': 2, '1048626': 1}
     """
     plm_counts = {}
@@ -22,17 +24,25 @@ def get_plm_based_counts(color_data):
         if key == "TOTAL_PIECES":
             continue
         
-        # Anahtarı '-' işaretinden parçala: ['Şort', '1048625', 'JM3']
         parts = key.split('-')
         
-        if len(parts) >= 2:
-            plm_code = parts[1] # Ortadaki değer PLM kodudur
-            
-            # Eğer bu PLM kodu daha önce eklendiyse üzerine topla, yoksa yeni aç
-            if plm_code in plm_counts:
-                plm_counts[plm_code] += value
+        # PLM Kodu sondan 2. elemandır (en sondaki renk kodundan önceki sayısal PLM kodu)
+        # Örn: 'T-Shirt-1048625-JM3' -> parts[-2] = '1048625'
+        if len(parts) >= 2 and parts[-2].isdigit():
+            plm_code = parts[-2]
+        else:
+            # Alternatif olarak anahtar içerisindeki sayı dizisini (PLM kodunu) Regex ile yakala
+            match = re.search(r'(\d+)', key)
+            if match:
+                plm_code = match.group(1)
             else:
-                plm_counts[plm_code] = value
+                continue
+            
+        # Eğer bu PLM kodu daha önce eklendiyse üzerine topla, yoksa yeni aç
+        if plm_code in plm_counts:
+            plm_counts[plm_code] += value
+        else:
+            plm_counts[plm_code] = value
                 
     return plm_counts
 
@@ -112,10 +122,11 @@ def handle_cs01_for_set_order(session: Any, main_order_data: Dict[str, Any]) -> 
     if not os.path.exists(input_path):
         raise Exception(f"BOM şablon dosyası bulunamadı: {input_path}. Lütfen dosyanın mevcut olduğundan emin olun.")            
     variant_data = read_variant_values_from_excel(input_path)
+    logger.info(_("LOG_VARIANT_DATA_FOUND") + f" {variant_data}")
     # variant_data'nın içindeki değerleri (values) listeye çevir ve ilkini ([0]) al
     first_color_data = list(variant_data.values())[0]
     comp_piece_counter =get_plm_based_counts(first_color_data)
-    
+    logger.info(_("LOG_CS01_COMP_PIECE_COUNT") + f" {comp_piece_counter}")
 
     main_material_code = main_order_data.get("main_material_code") # Ana ürünün malzeme kodu
     production_plant = main_order_data.get("sale_group", "2000") # Sabit üretim yeri
@@ -160,6 +171,7 @@ def handle_cs01_for_set_order(session: Any, main_order_data: Dict[str, Any]) -> 
             child_plm = str(child.get("plm_code"))
             child_material_code = child["sap_material_code"] 
             child_menge = comp_piece_counter.get(child_plm, 1)
+            
             
 
             logger.info(_("LOG_CS01_CHILD_ROW_ADDING", plm=child_plm, mat_code=child_material_code, qty=child_menge))
