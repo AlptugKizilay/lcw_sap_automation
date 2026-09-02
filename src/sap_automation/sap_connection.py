@@ -45,17 +45,17 @@ def get_sap_session():
                 break
         
         if connection is None:
-            logger.error(f"HATA: '{system_name}' adlı aktif bir SAP bağlantısı bulunamadı.")
-            logger.info("Lütfen SAP Logon Pad'den sistemi manuel olarak açın.")
+            logger.error(_("LOG_SAP_CONN_NOT_FOUND", system_name=system_name))
+            logger.info(_("LOG_SAP_MANUAL_LOGON"))
             return None
             
         # 3. Bağlantıdaki ilk oturumu (session) al
         session = connection.Children(0)
-        logger.info(f"'{system_name}' sistemine başarıyla bağlanıldı. İşlem Kodu: '{session.info.transaction}'")
+        logger.info(_("LOG_SAP_CONNECTED", system_name=system_name, tx=session.info.transaction))
 
         # 4. Login Kontrolü: Eğer login ekranındaysak (S000) uygulama diline uygun giriş yap
         if session.info.transaction == "S000":
-            logger.info(f"SAP Login ekranı algılandı. Uygulama dili '{app_lang}' uyarınca SAP dili '{target_sap_langu}' ile '{username}' girişi yapılıyor...")
+            logger.info(_("LOG_SAP_LOGIN_DETECTED", app_lang=app_lang, target_lang=target_sap_langu, username=username))
             
             session.findById("wnd[0]").maximize()
             session.findById("wnd[0]/usr/txtRSYST-BNAME").text = username
@@ -77,18 +77,18 @@ def get_sap_session():
             else:
                 current_sap_lang = raw_sap_lang
 
-            logger.info(f"Aktif SAP Oturum Dili: '{raw_sap_lang}' ({current_sap_lang}), Uygulama Dili: '{app_lang}'")
+            logger.info(_("LOG_SAP_ACTIVE_LANG", raw_lang=raw_sap_lang, curr_lang=current_sap_lang, app_lang=app_lang))
             
             if current_sap_lang != app_lang:
                 msg = _("SAP_LANG_MISMATCH", app_lang=app_lang, sap_lang=current_sap_lang)
                 logger.error(msg)
                 raise Exception(msg)
 
-        logger.info("SAP oturumu kullanıma hazır.")
+        logger.info(_("LOG_SAP_SESSION_READY"))
         return session
 
     except Exception as e:
-        logger.error(f"SAP bağlantısı / dil kontrolü sırasında hata: {e}")
+        logger.error(_("LOG_SAP_CONN_ERROR_DETAIL", error=e))
         return None
 
 if __name__ == "__main__":

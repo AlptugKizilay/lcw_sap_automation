@@ -10,7 +10,7 @@ import win32com
 from src.file_management.excel_reader import read_bom_from_excel, read_work_plan_from_excel, read_variant_values_from_excel
 from src.sap_automation.screens.common_actions import ensure_change_mode, read_sap_status_bar, save_sap_screen
 from src.util.config_manager import ConfigManager
-from src.util.localizer import get_unit_symbol
+from src.util.localizer import _, get_unit_symbol
 from src.util.handle_sap_popups import handle_sap_popups
 from src.util.update_json_cache import update_json_cache
 
@@ -2115,7 +2115,7 @@ def zmm0020_ensure_production_versions_created(session):
     İlerleme (boş hücre sayısında azalma) olduğu sürece deneme hakkı harcamaz.
     Sadece ilerleme durduğunda deneme sayısını artırır (Max: 5 deneme).
     """
-    logger.info("Üretim versiyonları kontrol süreci başlatıldı (Dinamik İlerleme Modu)...")
+    logger.info(_("LOG_PV_CONTROL_START"))
    
     try:
         session.findById("wnd[0]").maximize()
@@ -2140,23 +2140,20 @@ def zmm0020_ensure_production_versions_created(session):
 
             # 2. Başarı Kontrolü
             if current_empty_count == 0:
-                logger.info("Tüm üretim versiyonları ('X') başarıyla tamamlandı. ✅")
+                logger.info(_("LOG_PV_ALL_DONE"))
                 return True
 
             # 3. İlerleme Kontrolü (Attempt Mantığı)
             if current_empty_count < last_empty_count:
-                # İlerleme var! Boş hücre sayısı azaldı.
-                logger.info(f"İlerleme tespit edildi: {last_empty_count} -> {current_empty_count} boş hücre kaldı. Deneme hakkı harcanmadı.")
-                # failed_attempts artırılmıyor.
+                logger.info(_("LOG_PV_PROGRESS", last=last_empty_count, current=current_empty_count))
             else:
-                # İlerleme yok! Boş hücre sayısı değişmedi.
                 failed_attempts += 1
-                logger.warning(f"İlerleme yok! Boş hücre sayısı hala {current_empty_count}. Deneme: {failed_attempts}/{max_failed_attempts}")
+                logger.warning(_("LOG_PV_NO_PROGRESS", current=current_empty_count, attempt=failed_attempts, max_attempt=max_failed_attempts))
 
             last_empty_count = current_empty_count
 
             # 4. İşlemi Tetikle (CREATE_PV)
-            logger.info("'Üretim Versiyonu Oluştur' butonuna basılıyor...")
+            logger.info(_("LOG_PV_CREATE_BTN"))
             alv_grid.pressToolbarButton("CREATE_PV")
             time.sleep(0.5)
             
@@ -2170,7 +2167,6 @@ def zmm0020_ensure_production_versions_created(session):
                     logger.error(f"SAP Hatası: {status['text']}")
                     return False
             except Exception:
-                # Pop-up gelmemiş olabilir, devam et
                 pass
 
         logger.error(f"3 başarısız deneme sonunda hala {last_empty_count} adet boş hücre var.")
@@ -2187,12 +2183,11 @@ def _process_costing_action(session, alv_grid_costing, button_id, check_column_i
     İlerleme (X olmayan satır sayısında azalma) olduğu sürece deneme hakkı harcamaz.
     Sadece ilerleme durduğunda deneme sayısını artırır (Max: 3 deneme).
     """
-    logger.info(f"Maliyetlendirme işlemi başlatılıyor: Buton '{button_id}', Sütun '{check_column_id}'")
+    logger.info(_("LOG_COSTING_ACTION_START", button_id=button_id, check_col=check_column_id))
 
     failed_attempts = 0
     last_missing_count = float('inf')
     
-    # Grid nesnesini tazelemek için kullanılacak ID yolu
     grid_id = "wnd[0]/usr/tabsTAB_CONTROL/tabpTAB7/ssubSUB7:ZPP_001_P_MDC:0170/cntlCONT_SCRN_0170_ALV_01/shellcont/shell"
 
     while failed_attempts < max_attempts:
@@ -2210,23 +2205,19 @@ def _process_costing_action(session, alv_grid_costing, button_id, check_column_i
 
         # 2. Başarı Kontrolü
         if current_missing_count == 0:
-            logger.info(f"Tüm satırlarda '{check_column_id}' sütunu 'X' oldu. İşlem başarılı. ✅")
+            logger.info(_("LOG_COSTING_COL_SUCCESS", check_col=check_column_id))
             return True
 
         # 3. İlerleme ve Attempt Mantığı
         if current_missing_count < last_missing_count:
-            logger.info(f"İlerleme var: {last_missing_count} -> {current_missing_count} satır kaldı. Deneme hakkı korunuyor.")
-            # failed_attempts artırılmıyor
+            logger.info(_("LOG_COSTING_PROGRESS", last=last_missing_count, current=current_missing_count))
         else:
             failed_attempts += 1
-            logger.warning(f"İlerleme yok! Hala {current_missing_count} satır eksik. Deneme: {failed_attempts}/{max_attempts}")
+            logger.warning(_("LOG_COSTING_NO_PROGRESS", current=current_missing_count, attempt=failed_attempts, max_attempt=max_attempts))
 
         last_missing_count = current_missing_count
 
         # 4. İşlemi Uygula
-        logger.info(f"Eksik {current_missing_count} satır seçiliyor ve '{button_id}' butonuna basılıyor.")
-        
-        # Satırları seç ve butona bas
         alv_grid_costing.selectedRows = ",".join(map(str, rows_to_process))
         time.sleep(0.5)
         alv_grid_costing.pressToolbarButton(button_id)
@@ -2236,7 +2227,6 @@ def _process_costing_action(session, alv_grid_costing, button_id, check_column_i
         try:
             if session.Children.Count > 1:
                 popup = session.findById("wnd[1]")
-                logger.info(f"Pop-up onaylanıyor: {popup.Text}")
                 popup.sendVKey(0) # Enter
                 time.sleep(2)
                 
@@ -2257,14 +2247,9 @@ def _process_costing_action(session, alv_grid_costing, button_id, check_column_i
 # --- YENİ BAĞIMSIZ FONKSİYON: Maliyetlendirme Sekmesini Yönetme ---
 def zmm0020_handle_costing_tab(session):
     """
-    ZMM0020 ekranında "Maliyetlendirme" sekmesindeki (TAB7) maliyetlendirme adımlarını yönetir:
-    1. Detay butonuna basar ve ALV'yi genişletir.
-    2. Malzeme Maliyetini Tahmin Et (ESTIMATE_MATERIAL_COST) işlemini "MLYT_HSP_X" sütununu kontrol ederek yapar.
-    3. Maliyetlendirmeyi İşaretle (MARK_COST_ESTIMATE) işlemini "ISARETLEME_X" sütununu kontrol ederek yapar.
-    4. Maliyetlendirmeyi Serbest Bırak (RELEASE_COST_ESTIMATE) işlemini "ONAYLAMA_X" sütununu kontrol ederek yapar.
-    Her adımda 'X' olmayan satırları seçip işlemi tekrarlar (maksimum 2 kez).
+    ZMM0020 ekranında "Maliyetlendirme" sekmesindeki (TAB7) maliyetlendirme adımlarını yönetir.
     """
-    logger.info("ZMM0020: Maliyetlendirme sekmesi işlemleri başlatılıyor.")
+    logger.info(_("LOG_COSTING_TAB_START"))
     
 
     try:
@@ -2280,7 +2265,7 @@ def zmm0020_handle_costing_tab(session):
         time.sleep(0.5) # ALV gridin yüklenmesini bekle
 
         # 1. "DETAY" butonuna bas ve ALV'yi genişlet
-        logger.info("Maliyetlendirme ALV gridinde 'DETAY' butonuna basılıyor.")
+        logger.info(_("LOG_COSTING_DETAIL_BTN"))
         alv_grid_costing.pressToolbarButton("DETAY")
         time.sleep(0.5) # ALV'nin genişlemesini bekle
         alv_grid_costing = session.findById("wnd[0]/usr/tabsTAB_CONTROL/tabpTAB7/ssubSUB7:ZPP_001_P_MDC:0170/cntlCONT_SCRN_0170_ALV_01/shellcont/shell") # ALV gridi yenile
@@ -2301,7 +2286,7 @@ def zmm0020_handle_costing_tab(session):
             logger.error("Maliyetlendirmeyi Serbest Bırak işlemi başarısız oldu.")
             
         
-        logger.info("Tüm Maliyetlendirme sekmesi işlemleri başarıyla tamamlandı.")
+        logger.info(_("LOG_COSTING_ALL_DONE"))
         return True
 
     except Exception as e:
@@ -2614,7 +2599,7 @@ def ensure_zmm_session_active(session, data, is_step_1_active=True, cache_file_p
         return zmm0020_ilk_ekran_giris(session, data)
     
     # JSON'da model kodu var mı bak (3010... veya sap_material_code)
-    logger.info(f"ZMM0021'e giriş için model kodu: {model_code}, werks: {werks}")
+    logger.info(_("LOG_ZMM0021_ENTRY", model_code=model_code, werks=werks))
     
     if model_code:
         # ZMM0021'e direkt kodla gir
@@ -2627,25 +2612,20 @@ def ensure_zmm_session_active(session, data, is_step_1_active=True, cache_file_p
         session.findById("wnd[0]").sendVKey(0) # Enter
         return True
     else:
-        # KOD RAM'DE YOK: F4 fonksiyonunu çağır (Bu fonksiyon 3010... döner)
         logger.info("Model kodu RAM'de yok, F4 ile sorgulanıyor...")
         found_code = fetch_material_code_from_zmm0021(session, data)
         
-        if found_code: # Eğer None değilse, yani kod bulunduysa
-            # RAM ve JSON Güncelleme
+        if found_code:
             if data.get('orderType') == "single_from_set" and target_child is not None:
-                # Set çocuğu için güncelleme
                 target_child["sap_material_code"] = found_code
                 childrens = data.get("childrens", [])
                 update_json_cache(cache_file_path, "childrens", childrens)
                 logger.info(f"Set Çocuğu JSON Güncellendi: {found_code}")
             else:
-                # Single ürün için güncelleme
                 data['sap_material_code'] = found_code
                 update_json_cache(cache_file_path, "sap_material_code", found_code)
                 logger.info(f"Single Ürün JSON Güncellendi: {found_code}")
             
-            # Bulunan kodla içeri gir (F4 fonksiyonu zaten ZMM0021'de bırakıyor)
             session.findById("wnd[0]/usr/ctxtGS_MDC_SCRN_0100-WERKS").text = werks
             session.findById("wnd[0]").sendVKey(0) # Enter
             return True
@@ -2657,26 +2637,21 @@ def ensure_zmm_session_active(session, data, is_step_1_active=True, cache_file_p
 def zmm0020_step_1_variants(session, data, cache_file_path, target_child=None):
     """
     S1: Varyant & Model Girişi
-    Model sekmesi, Beden/Renk seçimi ve Varyant Ekleme.
     """
     try:
-        logger.info("--- [S1] Varyant & Model Girişi Başladı ---")
+        logger.info(_("LOG_S1_START"))
         
-        # 1. Giriş Kontrolü (S1 aktif olduğu için ZMM0020'den girer)
         if not ensure_zmm_session_active(session, data, is_step_1_active=True, cache_file_path=cache_file_path):
             return False
 
-        # 2. Model Sekmesi Giriş
         if not zmm0020_model_sekmesi_giris(session, data):
             return False
 
-        # 3. Beden Seçimi
         if not zmm0020_beden_secimi(session, data):
             return False
         if not ensure_target_sizes_selected(session, data):
             return False
 
-        # 4. Renk Seçimi ve Varyant Kontrol
         if not manage_color_selections(session, data):
             return False
         if not zmm0020_renk_secimi(session, data):
@@ -2684,86 +2659,70 @@ def zmm0020_step_1_variants(session, data, cache_file_path, target_child=None):
         if not ensure_target_colors_selected(session, data):
             return False
 
-        # 5. Varyant Ekle Butonu
         if not press_add_variant_button(session):
             return False
 
-        # 6. Kaydet (S1 sonunda kaydetmek şart, çünkü 3010 kodu oluşmalı)
         if not save_sap_screen(session):
             return False
 
-        logger.info("--- [S1] Başarıyla Tamamlandı ---")
+        logger.info(_("LOG_S1_DONE"))
         return True
 
     except Exception as e:
         logger.error(f"S1 Hatası: {e}")
         return False
+
 def zmm0020_step_2_routing(session, data, cache_file_path=None, target_child=None):
     """
     S2: İş Planı & Rota Oluşturma
-    Material ve Routing yaratma butonları.
     """
     try:
-        logger.info("--- [S2] İş Planı & Rota Başladı ---")
+        logger.info(_("LOG_S2_START"))
 
-        # 1. Giriş/Ekran Kontrolü (S1 seçili değilse ZMM0021 üzerinden girer)
-        # Not: Eğer S1 zaten yapıldıysa ve robot o ekrandaysa, bu fonksiyon 
-        # mevcut oturumu bozmadan devam edecek şekilde ayarlanmalı.
         if not ensure_zmm_session_active(session, data, is_step_1_active=False, cache_file_path=cache_file_path, target_child=target_child):
             return False
                 
 
-        # 2. İş Planı Sekmesine Geçiş (Tab 4)
         if not zmm0020_is_plani_sekmesi_giris(session):
             return False
         
 
-        # 3. İş Planı Adımları/Operasyonlar
         if not zmm0020_is_plani_adimlari(session, data):
             return False
 
-        # 4. Create Material Butonu
         if not zmm0020_press_create_material_button(session):
             return False
 
-        # 5. Create Routing Butonu
         if not zmm0020_press_create_routing_button(session):
             return False
         handle_sap_popups(session)
-        # 6. Kaydet
         if not save_sap_screen(session):
             return False
         
         handle_sap_popups(session)
-        logger.info("--- [S2] Başarıyla Tamamlandı ---")
+        logger.info(_("LOG_S2_DONE"))
         return True
 
     except Exception as e:
-        #İŞPLANI YARAT SONRASI POP-UP
-        
         logger.error(f"S2 Hatası: {e}")
         return False
 
 def zmm0020_step_3_bom(session, data, cache_file_path=None, target_child=None):
     """
     S3: BOM (Excel) Yükleme ve AFS Verileri
-    Excel şablonunu okur, SAP'ye aktarır ve AFS detaylarını girer.
     """
     try:
-        logger.info("--- [S3] BOM (Excel) Yükleme Adımı Başladı ---")
+        logger.info(_("LOG_S3_START"))
 
-        # 1. Giriş/Ekran Kontrolü (S1 seçili değilse ZMM0021 üzerinden girer)
         if not ensure_zmm_session_active(session, data, is_step_1_active=False, cache_file_path=cache_file_path, target_child=target_child):
             return False
         
-        # 2. BOM Sekmesine Geçiş ve Matris Ekleme (Tab 3)
         if not zmm0020_bom_sekmesi_matris_ekle(session):
              return False
 
-        # 3. Excel Dosya Yolu ve Kimlik Belirleme
         order_type = data.get('orderType')
         if order_type == "single_from_set":
-            plm_id = data.get('main_plm_id') # Şablon ana PLM adına göredir
+            plm_id = data.get('main_plm_id')
             child_plm_id = data.get('plm_code')
         else:
             plm_id = data.get('plm_code') 
@@ -2781,17 +2740,14 @@ def zmm0020_step_3_bom(session, data, cache_file_path=None, target_child=None):
             logger.error(f"BOM şablon dosyası bulunamadı: {input_path}")
             return False
 
-        # 4. Renk ve Beden Hazırlığı
         available_colors = list(data['order_color_code']) if 'order_color_code' in data else []
         available_sizes = [str(s) for s in data['sizes']] if 'sizes' in data else []
 
-        # 5. AFS Sütun Metadata'sını Al (Üretim Versiyonları sekmesinden)
         afs_column_metadata = _get_afs_column_metadata_from_prod_versions_tab(session)
         if not afs_column_metadata:
             logger.error("Üretim Versiyonları sekmesinden AFS metadata'sı alınamadı.")
             return False
 
-        # 6. Excel Verilerini SAP'ye Ekleme
         processed_bom_data = zmm0020_select_bom_operation_and_add_components(
             session, input_path, available_colors, available_sizes, afs_column_metadata, child_plm_id
         )
@@ -2800,19 +2756,17 @@ def zmm0020_step_3_bom(session, data, cache_file_path=None, target_child=None):
             logger.error("Excel BOM verileri SAP'ye eklenirken hata oluştu.")
             return False
             
-        data['processed_bom_data'] = processed_bom_data # Runner için sakla
+        data['processed_bom_data'] = processed_bom_data
         logger.info(f"{len(processed_bom_data)} adet BOM kalemi Excel'den okundu ve SAP'ye eklendi.")
 
-        # 7. BOM AFS Verilerini (Matris) Girme
         if not zmm0020_set_bom_afs_data(session, processed_bom_data, available_colors, available_sizes, afs_column_metadata):
             logger.error("BOM AFS verilerinin SAP'ye aktarılması başarısız.")
             return False
 
-        # 8. Kaydet
         if not save_sap_screen(session):
             return False
 
-        logger.info("--- [S3] Başarıyla Tamamlandı ---")
+        logger.info(_("LOG_S3_DONE"))
         return True
 
     except Exception as e:
@@ -2822,29 +2776,20 @@ def zmm0020_step_3_bom(session, data, cache_file_path=None, target_child=None):
 def zmm0020_step_4_costing(session, data, cache_file_path=None, target_child=None):
     """
     S4: Üretim Versiyonu Kontrolü ve Maliyet Hesaplama
-    Üretim versiyonlarının oluştuğundan emin olur ve maliyetlendirme sekmesini tetikler.
     """
     try:
-        logger.info("--- [S4] Üretim Versiyonu & Maliyet Adımı Başladı ---")
+        logger.info(_("LOG_S4_START"))
 
-        # 1. Giriş/Ekran Kontrolü (S1 seçili değilse ZMM0021 üzerinden girer)
         if not ensure_zmm_session_active(session, data, is_step_1_active=False, cache_file_path=cache_file_path, target_child=target_child):
             return False
         handle_sap_popups(session)
-        # 2. Üretim Versiyonlarının Oluşturulması (Sekme 6 civarı)
-        # Bu fonksiyon genellikle versiyonların otomatik oluşup oluşmadığını kontrol eder.
         if not zmm0020_ensure_production_versions_created(session):
             logger.error("Üretim versiyonları oluşturulamadı veya kontrol başarısız.")
             
-        
-        # 3. Maliyetlendirme Sekmesi İşlemleri
-        # Bu adımda robot maliyet sekmesine geçer ve hesaplama butonuna basar.
         if not zmm0020_handle_costing_tab(session):
             logger.error("Maliyetlendirme sekmesi işlemleri başarısız.")
-            
 
-
-        logger.info("--- [S4] Başarıyla Tamamlandı ---")
+        logger.info(_("LOG_S4_DONE"))
         return True
 
     except Exception as e:

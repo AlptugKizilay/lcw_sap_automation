@@ -130,7 +130,7 @@ class AutomationBridge:
         try:
             logger.info(_("MODULAR_FLOW_START"))
             logger.info(_("TARGET_PO_LOG", po_no=po_no))
-            logger.info(f"Seçili Adımlar (Selected Steps): {selected_steps}")
+            logger.info(_("LOG_SELECTED_STEPS", steps=selected_steps))
 
             # 1. Circular Import'u önlemek için yerel import yapıyoruz
             from main import start_modular_process
