@@ -11,7 +11,7 @@ AppId={{C789A5F0-8632-4E49-A672-881275C66C3E}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-DefaultDirName={userlocalappdata}\Programs\LCW_SAP_Automation
+DefaultDirName={localappdata}\Programs\LCW_SAP_Automation
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 ; Yönetici (Admin) yetkisi gerektirmeden kullanıcı seviyesinde kurulum (Per-User)
@@ -40,3 +40,4 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
