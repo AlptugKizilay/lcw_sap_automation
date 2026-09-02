@@ -3,7 +3,7 @@ import keyring
 import os
 
 APP_NAME = "LCW_Automation_2026"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 
 class ConfigManager:
     CONFIG_DIR = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), APP_NAME)
