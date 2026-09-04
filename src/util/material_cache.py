@@ -2,8 +2,12 @@ import json
 import os
 from datetime import datetime
 
+from src.util.config_manager import ConfigManager
+
 class MaterialCache:
-    def __init__(self, filepath="data/material_cache.json"):
+    def __init__(self, filepath=None):
+        if filepath is None:
+            filepath = os.path.join(ConfigManager.CONFIG_DIR, "data", "material_cache.json")
         # Verileri tutacağımız klasörü oluştur (Yoksa)
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         self.filepath = filepath
