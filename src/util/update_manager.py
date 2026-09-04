@@ -4,6 +4,7 @@ import json
 import threading
 import subprocess
 import tempfile
+import zipfile
 import requests
 import customtkinter as ctk
 from src.util.config_manager import ConfigManager, APP_VERSION
@@ -143,7 +144,10 @@ class UpdateManager:
                 temp_dir = tempfile.gettempdir()
                 zip_path = os.path.join(temp_dir, "lcw_update.zip")
 
-                res = requests.get(download_url, stream=True, timeout=30)
+                res = requests.get(download_url, stream=True, timeout=60)
+                if res.status_code != 200:
+                    raise Exception(f"HTTP {res.status_code} - Erişim Engellendi (Gizli Repo veya Yanlış URL)")
+
                 total_length = int(res.headers.get('content-length', 0))
 
                 downloaded = 0
@@ -155,6 +159,10 @@ class UpdateManager:
                             if total_length > 0:
                                 percent = downloaded / total_length
                                 progress_dialog.after(0, lambda p=percent: progressbar.set(p))
+
+                # İndirilen dosyanın geçerli bir ZIP olduğunu doğrula
+                if not zipfile.is_zipfile(zip_path):
+                    raise Exception("İndirilen dosya bozuka veya geçersiz bir ZIP arşivi.")
 
                 # İndirme bitti, updater scriptini çalıştır
                 updater_bat = resource_path(os.path.join("assets", "updater.bat"))
