@@ -68,11 +68,15 @@ class UpdateManager:
         dialog.resizable(False, False)
         dialog.attributes("-topmost", True)
 
-        # Pencereyi ana uygulamanın ortasına hizala
+        # Pencereyi ekranın ortasına güvenli biçimde hizala
         dialog.update_idletasks()
-        x = app.winfo_x() + (app.winfo_width() // 2) - (450 // 2)
-        y = app.winfo_y() + (app.winfo_height() // 2) - (260 // 2)
-        dialog.geometry(f"+{x}+{y}")
+        screen_width = dialog.winfo_screenwidth()
+        screen_height = dialog.winfo_screenheight()
+        x = max(0, (screen_width - 450) // 2)
+        y = max(0, (screen_height - 260) // 2)
+        dialog.geometry(f"450x260+{x}+{y}")
+        dialog.lift()
+        dialog.focus_force()
 
         title_label = ctk.CTkLabel(
             dialog, 
