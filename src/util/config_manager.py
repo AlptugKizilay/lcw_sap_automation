@@ -20,7 +20,7 @@ class ConfigManager:
     DEFAULTS = {
         # --- UYGULAMA VE GÜNCELLEME AYARLARI ---
         "APP_VERSION": APP_VERSION,
-        "UPDATE_CHECK_URL": "https://raw.githubusercontent.com/AlptugKizilay/lcw_sap_automation/main/version.json",
+        "UPDATE_CHECK_URL": "https://gist.githubusercontent.com/AlptugKizilay/f7112cf3433f3466dfb28e90cd8cf81a/raw/version.json",
         "AUTO_UPDATE_ENABLED": True,
 
         # --- LCW TEDARİKÇİ PORTALI AYARLARI ---
