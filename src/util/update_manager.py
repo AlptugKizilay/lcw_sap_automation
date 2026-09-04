@@ -51,6 +51,8 @@ class UpdateManager:
                 if remote_v > local_v:
                     # GUI thread'inde onay penceresini aç
                     app.after(0, lambda: UpdateManager._show_update_dialog(app, data))
+            else:
+                print(f"[UpdateManager] Güncelleme sunucusu HTTP {response.status_code} döndürdü. (Erişim engeli veya gizli repo olabilir)")
         except Exception as e:
             print(f"[UpdateManager] Güncelleme kontrolü sırasında hata: {e}")
 
