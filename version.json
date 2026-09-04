@@ -1,8 +1,8 @@
 {
-    "version": "1.0.1",
-    "release_date": "2026-09-02",
-    "download_url": "https://github.com/AlptugKizilay/lcw_sap_automation/releases/download/v1.0.1/LCW_SAP_Automation_v1.0.1.zip",
+    "version": "1.0.2",
+    "release_date": "2026-09-04",
+    "download_url": "https://github.com/AlptugKizilay/lcw_sap_automation/releases/download/v1.0.2/LCW_SAP_Automation_v1.0.2.zip",
     "mandatory": false,
-    "changelog": "• Çift dilli (TR/EN) tam SAP otomasyon ve log desteği.\n• Tireli ürün isimlerinde (T-Shirt vb.) PLM kodu ve parça adedi hesaplama düzeltmesi.\n• Otomatik güncelleme altyapısı ve kararlılık iyileştirmeleri."
+    "changelog": "• v1.0.2 Canlı Test Sürümü.\n• Çift dilli (TR/EN) log sistemi ve T-Shirt adedi düzeltmeleri entegre edildi."
 }
 
