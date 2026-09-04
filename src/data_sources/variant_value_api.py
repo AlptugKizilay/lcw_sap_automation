@@ -1,6 +1,7 @@
 import requests
 import json
 import logging
+from src.util.localizer import _
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def get_variant_details(po_no, token):
         }
 
         try:
-            logger.info(f"API isteği gönderiliyor. PO: {po_list}")
+            logger.info(_("LOG_SENDING_API_REQ", po_no=po_list))
             response = requests.post(url, headers=headers, data=json.dumps(payload))
 
             if response.status_code == 401 and attempt == 0:

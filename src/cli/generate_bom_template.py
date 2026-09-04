@@ -5,12 +5,11 @@ import json
 import logging
 import os
 from src.file_management.excel_generator import create_bom_template_excel, create_set_bom_template_excel
-
 from src.auth.auth_manager_playwright import _cached_token, get_token_sync
 from src.data_sources.variant_value_api import get_variant_details
+from src.util.localizer import _
 
-# Logging yapılandırması (main'den veya genel bir config'den gelmeli, burada örnek için)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 def generate_bom_template_cli(data):
@@ -30,21 +29,21 @@ def generate_bom_template_cli(data):
         # Renk kodlarını JSON'dan al
         available_colors = list(data['order_color_code']) if 'order_color_code' in data else []
         if not available_colors:
-            logger.warning("JSON verisinde renk kodu bulunamadı, Renk dropdown'ı boş olabilir.")
+            logger.warning(_("LOG_NO_COLOR_CODE"))
 
         # Beden kodlarını JSON'dan al (varsayım: selected_size_sequence_numbers zaten görünen beden isimleri)
         # EĞER bu sadece sıra numaralarıysa, zmm0020_beden_secimi'nde gerçek beden isimlerini çekmeliyiz.
         available_sizes = [str(s) for s in data['sizes']] if 'sizes' in data else []
         if not available_sizes:
-            logger.warning("JSON verisinde beden kodu bulunamadı")
+            logger.warning(_("LOG_NO_SIZE_CODE"))
 
-        logger.info(f"BOM Şablonu için PLM ID: {plm_id}, Renkler: {available_colors}, Bedenler: {available_sizes}")
+        logger.info(_("LOG_BOM_TEMPLATE_INFO", plm_id=plm_id, colors=available_colors, sizes=available_sizes))
         
         bom_template_path = create_bom_template_excel(plm_id, style_name, available_colors, available_sizes, isPrinted)
         if not bom_template_path:
             raise Exception("BOM şablonu Excel dosyası oluşturulamadı.")
         
-        logger.info(f"BOM şablonu '{bom_template_path}' başarıyla oluşturuldu. Kullanıcının doldurması bekleniyor.")
+        logger.info(_("LOG_BOM_TEMPLATE_CREATED", path=bom_template_path))
         return bom_template_path
 
     except json.JSONDecodeError as e:
@@ -66,7 +65,7 @@ def generate_set_bom_template_cli(data):
         po_no = data.get('po_no')
         order_color_code = data.get('order_color_code', [])
          # Token'ı al ve API sorgusunu yap
-        logger.info(f"Varyant değerleri API'den çekiliyor. PO: {po_no}")
+        logger.info(_("LOG_FETCHING_VARIANTS", po_no=po_no))
         
         token = get_token_sync()
 
@@ -75,7 +74,7 @@ def generate_set_bom_template_cli(data):
         if not childrens:
             raise Exception("Set siparişi içerisinde 'childrens' verisi bulunamadı.")
 
-        logger.info(f"SET BOM Şablonu oluşturuluyor: {style_name} (Çocuk Sayısı: {len(childrens)})")
+        logger.info(_("LOG_CREATING_SET_BOM", style_name=style_name, count=len(childrens)))
         
         # Set'e özel generator fonksiyonunu çağırıyoruz
         bom_template_path = create_set_bom_template_excel(plm_id, style_name, available_sizes, childrens, order_color_code, api_results)

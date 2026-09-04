@@ -2,6 +2,7 @@
 
 import requests
 import logging
+from src.util.localizer import _
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ def get_usd_to_egp_rate():
         rate = data.get("rates", {}).get("EGP")
         
         if rate:
-            logger.info(f"Güncel USD/EGP Kuru Çekildi: {rate}")
+            logger.info(_("LOG_EXCHANGE_RATE", curr="USD/EGP", rate=rate))
             return float(rate)
         else:
             raise Exception("EGP kuru veride bulunamadı.")

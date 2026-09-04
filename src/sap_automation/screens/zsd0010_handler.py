@@ -6,6 +6,7 @@ import time
 from typing import Dict
 from src.sap_automation.screens.common_actions import read_sap_status_bar
 from src.util.helpers import get_resource_path
+from src.util.localizer import _
 
 logger = logging.getLogger(__name__)
 
@@ -30,51 +31,51 @@ def fiori_login(url: str, username: str, password: str) -> tuple[Page, Browser, 
     browser = None
     page = None
     try:
-        logger.info("Playwright tarayıcısı başlatılıyor...")
+        logger.info(_("LOG_FIORI_START_BROWSER"))
         p = sync_playwright().start()
         browser = p.chromium.launch(executable_path=chrome_exe, headless=False) # Test için tarayıcıyı görünür aç
         page = browser.new_page()
 
-        logger.info(f"Fiori login sayfasına gidiliyor: {url}")
+        logger.info(_("LOG_FIORI_GOTO_LOGIN", url=url))
         # Sayfanın tamamen yüklenmesini bekleyelim (networkidle yerine 'load' daha genel ve güvenli olabilir)
         page.goto(url, wait_until='load', timeout=60000) 
 
         # Login form elementlerinin görünür olmasını bekleyelim
-        logger.info("Login form elementlerinin yüklenmesi bekleniyor...")
+        logger.info(_("LOG_FIORI_WAIT_FORM"))
         page.wait_for_selector("#USERNAME_FIELD-inner", timeout=30000)
         page.wait_for_selector("#PASSWORD_FIELD-inner", timeout=30000)
         page.wait_for_selector("#LANGUAGE_SELECT", timeout=30000)
         page.wait_for_selector("#LOGIN_LINK", timeout=30000)
-        logger.info("Login form elementleri bulundu.")
+        logger.info(_("LOG_FIORI_FORM_FOUND"))
 
-        logger.info("Kullanıcı adı ve şifre giriliyor.")
+        logger.info(_("LOG_FIORI_ENTER_CRED"))
         page.fill("#USERNAME_FIELD-inner", username)
         page.fill("#PASSWORD_FIELD-inner", password)
 
-        logger.info("Dili 'TR - Türkçe' olarak seçiliyor.")
+        logger.info(_("LOG_FIORI_SELECT_LANG", lang="TR - Türkçe"))
         page.select_option("#LANGUAGE_SELECT", "TR")
 
-        logger.info("Giriş butonuna tıklanıyor.")
+        logger.info(_("LOG_FIORI_CLICK_LOGIN"))
         page.click("#LOGIN_LINK")
 
         # Fiori Launchpad'in tamamen yüklenmesini bekleyelim.
         # Fiori'de genellikle ana kabuk (shell) yüklendiğinde işlem tamamlanmıştır.
         # '#shell-header' veya 'div.sapUshellShell' gibi elementler kullanılabilir.
-        logger.info("Fiori Launchpad'in yüklenmesi bekleniyor (#shell-header elementi kontrol ediliyor)...")
+        logger.info(_("LOG_FIORI_WAIT_LAUNCHPAD"))
         page.wait_for_selector('#shell-header', timeout=60000) # 60 saniye bekleyelim
 
         if page.locator('#shell-header').is_visible():
-            logger.info("Fiori Launchpad'e başarıyla giriş yapıldı.")
+            logger.info(_("LOG_FIORI_LOGIN_SUCCESS"))
             return page, browser, p
         else:
-            logger.error("Fiori Launchpad'e giriş yapılamadı. #shell-header elementi bulunamadı.")
+            logger.error(_("LOG_FIORI_LOGIN_FAIL"))
             page.screenshot(path="fiori_login_failed_no_shell_header.png")
             browser.close()
             p.stop()
             return None, None, None
 
     except Exception as e:
-        logger.exception(f"Fiori login sırasında kritik hata oluştu: {e}")
+        logger.exception(_("LOG_FIORI_CRITICAL_ERR", error=str(e)))
 
         if browser:
             browser.close()
@@ -98,14 +99,14 @@ def zsd0010_process_plm_items(page: Page, plm_code_to_filter: str, expected_pric
         str | None: The extracted collected data if successful, None otherwise.
     """
     try:
-        logger.info(f"ZSD0010: PLM kodu '{plm_code_to_filter}' ile filtreleme başlatılıyor.")
+        logger.info(_("LOG_ZSD0010_FILTER_START", plm_code=plm_code_to_filter))
 
         # 1. PLM Kodu Input Alanını Bul ve Doldur
         plm_input_selector = "#application-Action-SD001-component---Main--smartFilterBar-filterItemControl_BASIC-IvPlmkodu-inner"
         page.wait_for_selector(plm_input_selector, timeout=30000)
         page.fill(plm_input_selector, plm_code_to_filter)
         page.press(plm_input_selector, "Enter") # Enter tuşuna basarak filtreyi uygula
-        logger.info(f"PLM kodu '{plm_code_to_filter}' girildi ve filtre uygulandı.")
+        logger.info(_("LOG_ZSD0010_FILTER_APPLIED", plm_code=plm_code_to_filter))
         time.sleep(3) # Filtreleme sonuçlarının yüklenmesini bekle (Fiori yükleme durumunu kontrol etmek daha iyi olabilir)
 
         # 2. Listelenen Öğeleri Bul ve Üzerinde Gezin
@@ -116,10 +117,10 @@ def zsd0010_process_plm_items(page: Page, plm_code_to_filter: str, expected_pric
         # Assuming each row is a 'tr' element directly under the table body.
         rows_locator = page.locator(f"{table_body_selector} > tr[id^='__item']") 
         row_count = rows_locator.count()
-        logger.info(f"Filtreleme sonrası {row_count} adet satır bulundu.")
+        logger.info(_("LOG_ZSD0010_ROWS_FOUND", count=row_count))
 
         if row_count == 0:
-            logger.warning(f"PLM kodu '{plm_code_to_filter}' için hiçbir öğe bulunamadı.")
+            logger.warning(_("LOG_ZSD0010_NO_ITEMS", plm_code=plm_code_to_filter))
             return None
 
         collected_data = None
@@ -127,7 +128,7 @@ def zsd0010_process_plm_items(page: Page, plm_code_to_filter: str, expected_pric
         # Iterate through each row
         for i in range(row_count):
             row = rows_locator.nth(i)
-            logger.debug(f"Satır {i+1} işleniyor...")
+            logger.debug(_("LOG_ZSD0010_ROW_PROCESSING", row=i+1))
 
             # 3. Bilgileri Çek
             # Fiyat
@@ -135,17 +136,17 @@ def zsd0010_process_plm_items(page: Page, plm_code_to_filter: str, expected_pric
             price_text = row.locator(price_selector).text_content().strip()
             # Fiyatı virgül yerine nokta ile float'a çevir
             extracted_price = float(price_text.replace('.', '').replace(',', '.'))
-            logger.debug(f"Satır {i+1} - Çekilen Fiyat: {extracted_price}")
+            logger.debug(_("LOG_ZSD0010_EXTRACTED_PRICE", row=i+1, price=extracted_price))
 
             # Onay Durum Bilgisi
             approval_status_selector = "span[id^='__status0-'][id$='-text']"
             approval_status = row.locator(approval_status_selector).text_content().strip()
-            logger.debug(f"Satır {i+1} - Onay Durumu: {approval_status}")
+            logger.debug(_("LOG_ZSD0010_APPROVAL_STATUS", row=i+1, status=approval_status))
 
             # PLM Durum Bilgisi
             plm_status_selector = "span[id^='__status1-'][id$='-text']"
             plm_status = row.locator(plm_status_selector).text_content().strip()
-            logger.debug(f"Satır {i+1} - PLM Durumu: {plm_status}")
+            logger.debug(_("LOG_ZSD0010_PLM_STATUS", row=i+1, status=plm_status))
 
             # 4. Fiyat Karşılaştırması ve Detay Sayfasına Gitme
             if extracted_price == expected_price_from_data:
@@ -462,7 +463,7 @@ def _fill_kaynak_kalem_in_popup_grid(session) -> bool:
 
 def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_price: float, po_no: str, is_child: bool, order_type: str) -> dict | None:
     try:
-        logger.info(f"ZSD0010: PLM '{plm_code_to_filter}' sorgulanıyor. (Child: {is_child}, PO: {po_no})")
+        logger.info(_("LOG_ZSD0010_QUERY_PLM", plm_code=plm_code_to_filter, is_child=is_child, po_no=po_no))
         
         # 1. Filtrele
         plm_input_selector = "#application-Action-SD001-component---Main--smartFilterBar-filterItemControl_BASIC-IvPlmkodu-inner"
@@ -493,7 +494,7 @@ def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_p
 
         if row_count == 0:
             # KULLANICIYA ANLAMLI HATA MESAJI
-            error_msg = f"HATA: {plm_code_to_filter} numaralı PLM için Fiori'de uygun bir teklif satırı bulunamadı! Lütfen Fiori üzerinden teklif durumunu ve fiyatlandırmayı kontrol edin."
+            error_msg = _("LOG_ZSD0010_NO_OFFER_ERR", plm_code=plm_code_to_filter)
             logger.error(error_msg)
             # Bu hatayı yukarıdaki fonksiyonlara iletmek için özel bir Exception fırlatabiliriz
             raise Exception(error_msg)
@@ -530,7 +531,7 @@ def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_p
             price_match = extracted_price == expected_price
 
             if po_match and (is_child or price_match):
-                logger.info(f"Eşleşme Bulundu: {primary_id}. Detaya gidiliyor.")
+                logger.info(_("LOG_ZSD0010_MATCH_FOUND", primary_id=primary_id))
                 
                 # Navigasyon (Primary row üzerindeki ok işareti)
                 primary_row.locator("span[id$='-imgNav']").click()
@@ -555,13 +556,13 @@ def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_p
                     bid_no = result['current_bid']       
                     # Eğer ekrandaki PLM kodu bizim aradığımız kod ise ve Bid No boş değilse dur
                     if plm_check == str(plm_code_to_filter) and bid_no != "":
-                        logger.info(f"JS Başarılı! Canlı Veri -> PLM: {plm_check}, Bid: {bid_no}")
+                        logger.info(_("LOG_ZSD0010_JS_SUCCESS", plm_check=plm_check, bid_no=bid_no))
                         break
                     
                     time.sleep(0.5) # Yarım saniye bekle ve tekrar sor      
                 # Döngü bittiğinde hala yanlış veri varsa uyar
                 if plm_check != str(plm_code_to_filter):
-                    logger.warning(f"DİKKAT: Ekrandaki PLM ({plm_check}) arananla ({plm_code_to_filter}) eşleşmiyor!")   
+                    logger.warning(_("LOG_ZSD0010_PLM_MISMATCH", plm_check=plm_check, expected=plm_code_to_filter))   
 
                 print(f"Bid no: {bid_no}")
                 # Organizasyonel Veriler
@@ -583,10 +584,10 @@ def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_p
                             sales_org = sales_org_el.get_attribute("value") or ""
                             sales_office = page.locator("input[id*='inpSalesOffice']").first.get_attribute("value") or ""
                             sales_group = page.locator("input[id*='inpSalesGroup']").first.get_attribute("value") or ""
-                            logger.info(f"Organizasyonel veriler başarıyla çekildi: {sales_org}")
+                            logger.info(_("LOG_ZSD0010_ORG_FETCHED", sales_org=sales_org))
                             
                         # --- POP-UP KAPATMA (Tamam / ID / ESC) ---
-                        logger.info("Pop-up kapatma işlemi deneniyor...")
+                        logger.info(_("LOG_ZSD0010_POPUP_CLOSE_TRY"))
                         # Selector tanımları
                         ok_by_text = page.locator("button").filter(has_text="Tamam").filter(visible=True).first
                         ok_by_id = page.locator("button[id^='__mbox-btn-']").filter(visible=True).first
@@ -594,27 +595,27 @@ def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_p
                             # 1. Önce 'Tamam' metni olan butona bak
                             if ok_by_text.count() > 0:
                                 ok_by_text.click(force=True)
-                                logger.info("Pop-up 'Tamam' metni ile kapatıldı.")
+                                logger.info(_("LOG_ZSD0010_POPUP_CLOSED_OK"))
                             # 2. Yoksa senin verdiğin ID kalıbına (__mbox-btn-0 vb.) bak
                             elif ok_by_id.count() > 0:
                                 ok_by_id.click(force=True)
-                                logger.info(f"Pop-up ID kalıbı ({ok_by_id.get_attribute('id')}) ile kapatıldı.")
+                                logger.info(_("LOG_ZSD0010_POPUP_CLOSED_ID", id=ok_by_id.get_attribute('id')))
                             # 3. Hiçbiri yoksa Klavyeden ESC tuşuna bas
                             else:
-                                logger.warning("Kapatma butonu bulunamadı, Klavyeden 'ESC' tuşuna basılıyor.")
+                                logger.warning(_("LOG_ZSD0010_POPUP_ESC"))
                                 page.keyboard.press("Escape")
                                 time.sleep(1) # Pencerenin kapanması için kısa süre bekle
                         except Exception as e_btn:
-                            logger.error(f"Pop-up kapatılırken kritik hata: {e_btn}")
+                            logger.error(_("LOG_ZSD0010_POPUP_CLOSE_ERR", error=str(e_btn)))
                             # Son çare yine ESC denenebilir
                             page.keyboard.press("Escape")
                         time.sleep(1) # İşlemin oturması için bekle                        
                         
                     else:
-                        logger.warning("Organizasyonel Veriler butonu (#__button13) bu ekranda mevcut değil.")
+                        logger.warning(_("LOG_ZSD0010_ORG_BTN_NOT_FOUND"))
 
                 except Exception as e_org:
-                    logger.warning(f"Organizasyonel veriler çekilemedi, işleme devam ediliyor: {e_org}")
+                    logger.warning(_("LOG_ZSD0010_ORG_FETCH_FAIL", error=str(e_org)))
                     # Her ihtimale karşı ESC basarak ekranı temizle
                     page.keyboard.press("Escape")
 
@@ -650,7 +651,7 @@ def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_p
                             time.sleep(2)
                
                 # --- ANA SAYFAYA DÖN (Garantili Yöntem) ---
-                logger.info("İşlem bitti, ana listeye geri dönülüyor...")
+                logger.info(_("LOG_ZSD0010_NAV_BACK"))
                 
                 # Senin HTML yapına uygun selectorlar:
                 # 1. #backBtn (Senin paylaştığın ID)
@@ -665,41 +666,42 @@ def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_p
                     
                     # Bazı durumlarda click() yerine force=True gerekebilir (overlay varsa)
                     back_btn.click(force=True)
-                    logger.info("Geri butonuna başarıyla tıklandı.")
+                    logger.info(_("LOG_ZSD0010_BACK_CLICKED"))
                     
                 except Exception as e_back:
-                    logger.warning(f"Geri butonu tıklanamadı: {e_back}. Tarayıcı geri komutu deneniyor.")
+                    logger.warning(_("LOG_ZSD0010_BACK_ERR", error=str(e_back)))
                     page.go_back()
                 
                 if order_type == "set": 
                     try:
-                        logger.info("Fiori: Set siparişi için bir sonraki PLM sorgu alanı bekleniyor...")
+                        logger.info(_("LOG_ZSD0010_WAIT_NEXT_PLM"))
                         page.wait_for_load_state("networkidle")
                         page.wait_for_selector(plm_input_selector, timeout=20000)
                         time.sleep(2) # Kısa bir es
                     except Exception as e:
                         # Hata alsa bile 'return True' diyeceği için akış bozulmaz
-                        logger.warning(f"Fiori: Sonraki giriş alanı hazır değil ama devam ediliyor: {e}")
+                        logger.warning(_("LOG_ZSD0010_NEXT_FIELD_NOT_READY", error=str(e)))
                 
                 return collected_data              
                 
 
         return None
     except Exception as e:
-        logger.exception(f"Fiori İşlem Hatası: {e}")
+        logger.exception(_("LOG_ZSD0010_FIORI_ERR", error=str(e)))
         return None
  
 def safe_press_grid_button(grid, button_id, description):
-                try:
-                    # Butona basmayı dene
-                    grid.pressToolbarButton(button_id)
-                    logger.info(f"ZSD0010: '{description}' ({button_id}) butonuna başarıyla basıldı.")
-                    time.sleep(1.5) # İşlem için SAP'ye zaman ver
-                    return True
-                except Exception:
-                    # Buton yoksa veya o an basılamıyorsa buraya düşer
-                    logger.warning(f"ZSD0010: '{description}' ({button_id}) butonu şu an aktif değil veya bulunamadı. Atlanıyor...")
-                    return False   
+    try:
+        # Butona basmayı dene
+        grid.pressToolbarButton(button_id)
+        logger.info(_("LOG_ZSD0010_BTN_PRESSED", desc=description, btn_id=button_id))
+        time.sleep(1.5) # İşlem için SAP'ye zaman ver
+        return True
+    except Exception:
+        # Buton yoksa veya o an basılamıyorsa buraya düşer
+        logger.warning(_("LOG_ZSD0010_BTN_INACTIVE", desc=description, btn_id=button_id))
+        return False   
+
 def _handle_set_bom_size_sub_grid(session, data, fiori_map):
     """
     wnd[2] üzerinde açılan alt griddeki her bir child ürünü (SATNR) 
@@ -713,7 +715,7 @@ def _handle_set_bom_size_sub_grid(session, data, fiori_map):
         for r in range(child_grid.RowCount):
             # SATNR (Malzeme No) al
             sap_mat = str(child_grid.GetCellValue(r, "SATNR")).strip()
-            logger.info(f"Alt Grid Satır {r}: Malzeme No: {sap_mat}")
+            logger.info(_("LOG_ZSD0010_SUBGRID_ROW", row=r, mat=sap_mat))
             
             # JSON'dan bu Malzeme No'ya ait PLM'i bul
             target_plm = None
@@ -726,7 +728,7 @@ def _handle_set_bom_size_sub_grid(session, data, fiori_map):
             if target_plm and target_plm in fiori_map:
                 bid = fiori_map[target_plm]['standard_bid_number']
                 price = fiori_map[target_plm]['price']
-                logger.info(f"Alt Grid Satır {r}: PLM {target_plm} -> Bid: {bid}, Fiyat: {price}")
+                logger.info(_("LOG_ZSD0010_SUBGRID_DATA", row=r, plm=target_plm, bid=bid, price=price))
                 try:
                     child_grid.firstVisibleColumn = "COLOR"
                     time.sleep(0.2)
@@ -736,7 +738,7 @@ def _handle_set_bom_size_sub_grid(session, data, fiori_map):
                     time.sleep(0.2)
                     
                 except Exception as e:
-                    logger.error(f"Alt Grid Satır {r}: PLM {target_plm} -> Bid: {bid}, Fiyat: {price} -> HATA: {e}")
+                    logger.error(_("LOG_ZSD0010_SUBGRID_ERR", row=r, plm=target_plm, bid=bid, price=price, error=str(e)))
                 
 
         # Bilgileri girince Enter'a bas (SAP doğrulasın)
@@ -746,11 +748,11 @@ def _handle_set_bom_size_sub_grid(session, data, fiori_map):
             sub_grid = session.findById("wnd[2]/usr/cntlGRID1/shellcont/shell")
             
             # 1. &ETA (Hesapla/Dağıt) Butonuna Bas
-            logger.info("ZSD0010: Alt grid '&ETA' kontrol ediliyor.")
+            logger.info(_("LOG_ZSD0010_CHECK_ETA"))
             safe_press_grid_button(sub_grid, "&ETA", "Hesapla/Dağıt")
             
             # 2. &CHECK (Kontrol Et) Butonuna Bas
-            logger.info("ZSD0010: Alt grid '&CHECK' kontrol ediliyor.")
+            logger.info(_("LOG_ZSD0010_CHECK_CHECK"))
             safe_press_grid_button(sub_grid, "&CHECK", "Kontrol Et")
 
             # 3. STATUS BAR KONTROLÜ
@@ -761,27 +763,27 @@ def _handle_set_bom_size_sub_grid(session, data, fiori_map):
 
             if msg_type == "E":
                 # Eğer Status Bar'da bir hata ("E") varsa işlemi durdur ve hata fırlat
-                logger.error(f"ZSD0010 Alt Grid Hatası: {msg_text}")
+                logger.error(_("LOG_ZSD0010_SUBGRID_MSG_ERR", msg=msg_text))
                 # Hata anında ekran görüntüsü (Opsiyonel)
                 # page.screenshot(path="alt_grid_error.png") 
                 raise Exception(f"SAP Alt Grid Doğrulama Hatası: {msg_text}")
             
             elif msg_type == "W":
                 # Uyarı ("W") varsa logla ama devam et (veya duruma göre raise et)
-                logger.warning(f"ZSD0010 Alt Grid Uyarısı: {msg_text}")
+                logger.warning(_("LOG_ZSD0010_SUBGRID_MSG_WARN", msg=msg_text))
             
             else:
-                logger.info(f"ZSD0010 Alt Grid Doğrulaması Başarılı: {msg_text}")
+                logger.info(_("LOG_ZSD0010_SUBGRID_MSG_SUCCESS", msg=msg_text))
 
             # 4. Her şey yolundaysa alt gridi onayla/kapat
             session.findById("wnd[2]/tbar[0]/btn[0]").press() # Tamam (Enter)
-            logger.info(f"wnd[2]/tbar[0]/btn[0]: Basıldı")
+            logger.info(_("LOG_ZSD0010_BTN0_PRESSED"))
             time.sleep(1)
 
         except Exception as e:
             if "SAP Alt Grid Doğrulama Hatası" in str(e):
                 raise
-            logger.error(f"ZSD0010: Alt grid doğrulama sırasında hata: {e}")
+            logger.error(_("LOG_ZSD0010_SUBGRID_VAL_ERR", error=str(e)))
             raise Exception(f"Alt grid doğrulama başarısız: {e}")
         
     except Exception as e:
@@ -808,7 +810,7 @@ def zsd0010_process_order_integration_gui_v2(session, data, collected_data) -> b
     second_val = values_list[1] if len(values_list) > 1 else first_val
     
     try:
-        logger.info(f"ZSD0010 GUI: İşlem başlatılıyor. PO: {po_number}, Tip: {data.get('orderType')}")
+        logger.info(_("LOG_ZSD0010_GUI_START", po=po_number, order_type=data.get('orderType')))
         session.startTransaction("ZSD0010")
 
         # 1. Başlangıç Ekranı Filtreleri
@@ -820,7 +822,7 @@ def zsd0010_process_order_integration_gui_v2(session, data, collected_data) -> b
         # 2. ALV Grid Seçimi
         alv_grid = session.findById("wnd[0]/usr/cntlSCR_CONT/shellcont/shell")
         if alv_grid.RowCount == 0:
-            logger.error(f"ZSD0010: PO {po_number} için kayıt bulunamadı.")
+            logger.error(_("LOG_ZSD0010_PO_NOT_FOUND", po=po_number))
             return False
 
         alv_grid.currentCellRow = 0
@@ -852,14 +854,14 @@ def zsd0010_process_order_integration_gui_v2(session, data, collected_data) -> b
 
         # 5. --- SET SİPARİŞİ ÖZEL ADIMI (BOM_SIZE_BTN DÖNGÜSÜ) ---
         if is_set:
-            logger.info("ZSD0010: Set siparişi için her satırın BOM_SIZE detayı işleniyor.")
+            logger.info(_("LOG_ZSD0010_SET_BOM_SIZE_START"))
             
             popup_grid = session.findById("wnd[1]/usr/cntlSCR_CONT/shellcont/shell")
             row_count = popup_grid.RowCount
 
             # wnd[1] üzerindeki her bir satır için döngü başlatıyoruz
             for i in range(row_count):
-                logger.info(f"ZSD0010: Pop-up Satır {i+1}/{row_count} işleniyor.")
+                logger.info(_("LOG_ZSD0010_POPUP_ROW_PROCESSING", current=i+1, total=row_count))
                 
                 # İlgili satıra odaklan ve BOM_SIZE butonuna bas
                 popup_grid.currentCellRow = i
@@ -875,9 +877,9 @@ def zsd0010_process_order_integration_gui_v2(session, data, collected_data) -> b
                     # Bu fonksiyon wnd[2]'yi doldurup kapatacak (btn[0] ile)
                     _handle_set_bom_size_sub_grid(session, data, fiori_map)
                     
-                    logger.info(f"ZSD0010: Satır {i} alt grid işlemi tamamlandı.")
+                    logger.info(_("LOG_ZSD0010_ROW_SUBGRID_DONE", row=i))
                 except Exception as e_row:
-                    logger.warning(f"ZSD0010: Satır {i} için BOM_SIZE butonu bulunamadı veya basılamadı: {e_row}")
+                    logger.warning(_("LOG_ZSD0010_BOM_SIZE_BTN_ERR", row=i, error=str(e_row)))
                     continue
                 
         # 6. Final Kayıt (Pop-up üzerindeki Onay butonu)
@@ -899,18 +901,18 @@ def zsd0010_process_order_integration_gui_v2(session, data, collected_data) -> b
                 except:
                     msg_text = popup_wnd.Text # Fallback: Pencere başlığı veya genel text
 
-                logger.info(f"ZSD0010 Pop-up Mesajı: '{msg_text}'")
+                logger.info(_("LOG_ZSD0010_POPUP_MSG", msg=msg_text))
 
                 # 3. Hata Kelimeleri Kontrolü
                 # Mesajda hata belirten kritik kelimeler geçiyorsa durdur ve hata fırlat
                 error_keywords = ["hata", "error", "başarısız", "eksik", "uygun değil", "bulunamadı", "yetki"]
                 if any(key in msg_text.lower() for key in error_keywords):
-                    logger.error(f"ZSD0010 SAP Entegrasyon Hatası: {msg_text}")
+                    logger.error(_("LOG_ZSD0010_SAP_INTEG_ERR", msg=msg_text))
                     raise Exception(f"SAP Entegrasyon Hatası: {msg_text}")
 
                 # 4. Onay İşlemi (Eğer mesaj bir soruysa: '... oluşturulsun mu?')
                 # btnBUTTON_1 genellikle 'Evet' (Yes) butonudur.
-                logger.info("ZSD0010: Pop-up onaylanıyor (Evet/Tamam).")
+                logger.info(_("LOG_ZSD0010_POPUP_CONFIRM"))
                 popup_wnd.findById("usr/btnBUTTON_1").press()
                 time.sleep(1)
 
@@ -920,7 +922,7 @@ def zsd0010_process_order_integration_gui_v2(session, data, collected_data) -> b
                     info_popup = session.findById("wnd[2]", False)
                     if info_popup:
                         final_msg = info_popup.findById("usr/txtS_POPUP-TEXT", False).text if info_popup.findById("usr/txtS_POPUP-TEXT", False) else info_popup.Text
-                        logger.info(f"ZSD0010 Final Bilgi: {final_msg}")
+                        logger.info(_("LOG_ZSD0010_FINAL_INFO", msg=final_msg))
                         # Tamam (btn[0]) butonuna basarak kapat
                         if info_popup.findById("tbar[0]/btn[0]", False): 
                             info_popup.findById("tbar[0]/btn[0]").press()
@@ -932,17 +934,17 @@ def zsd0010_process_order_integration_gui_v2(session, data, collected_data) -> b
                 if session.findById("wnd[0]/sbar").messageType == "E": # 'E' = Error
                     raise Exception(f"SAP Status Bar Hatası: {status_text}")
                 
-                logger.warning("ZSD0010: Beklenen onay pop-up'ı (wnd[2]) çıkmadı, status bar kontrol edildi.")
+                logger.warning(_("LOG_ZSD0010_NO_CONFIRM_POPUP"))
                 time.sleep(1) # Kısa bir bekleme, SAP'nin durumu güncellemesi için
             return True
         
         except Exception as e:
             if "SAP Entegrasyon Hatası" in str(e) or "Status Bar Hatası" in str(e):
                 raise # Kendi fırlattığımız hatayı yukarı ilet
-            logger.error(f"ZSD0010: Pop-up işleme sırasında beklenmeyen hata: {e}")
+            logger.error(_("LOG_ZSD0010_POPUP_UNEXPECTED_ERR", error=str(e)))
             raise Exception(f"ZSD0010 Pop-up aşamasında hata: {e}")
 
     except Exception as e:
-        logger.error(f"ZSD0010 GUI Hatası: {e}", exc_info=True)
+        logger.error(_("LOG_ZSD0010_GUI_ERR", error=str(e)), exc_info=True)
         return False
 

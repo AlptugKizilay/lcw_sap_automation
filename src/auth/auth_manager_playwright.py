@@ -9,6 +9,7 @@ import json
 from dotenv import load_dotenv
 from src.util.config_manager import ConfigManager
 from src.util.helpers import get_resource_path
+from src.util.localizer import _
 
 load_dotenv()
 cfg = ConfigManager()
@@ -30,7 +31,7 @@ LOGIN_BUTTON_SELECTOR = cfg.get_setting("LCW_LOGIN_BUTTON_SELECTOR") or os.geten
 logger = logging.getLogger(__name__)
 def clear_cached_token():
     global _cached_token, _token_expiry_time
-    logger.info("Önbellekteki token temizleniyor (401 / Yetkisiz erişim veya zorunlu yenileme)...")
+    logger.info(_("LOG_TOKEN_CLEARING"))
     _cached_token = None
     _token_expiry_time = 0
 
@@ -40,7 +41,7 @@ async def get_auth_token_playwright(username=None, password=None, force_refresh=
     if force_refresh:
         clear_cached_token()
     elif _cached_token and _token_expiry_time > time.time() + 300: # 5 dakika tampon
-        logger.info("Önbellekten geçerli token kullanılıyor (Playwright).")
+        logger.info(_("LOG_TOKEN_USING_CACHED"))
         return _cached_token
 
     username = username or cfg.get_setting("LCW_PORTAL_USER") or os.getenv("LCW_USERNAME")
@@ -50,7 +51,7 @@ async def get_auth_token_playwright(username=None, password=None, force_refresh=
         print("Hata: Kimlik doğrulama için kullanıcı adı ve parola sağlanmadı (ortam değişkenleri veya parametreler).")
         return None
 
-    logger.info("Playwright ile token alınmaya çalışılıyor...")
+    logger.info(_("LOG_TOKEN_ACQUIRING"))
     chrome_exe = get_resource_path(os.path.join("browsers", "chromium-1200", "chrome-win64", "chrome.exe"))
     
     async with async_playwright() as p:
@@ -72,7 +73,7 @@ async def get_auth_token_playwright(username=None, password=None, force_refresh=
                         possible_token = parts[1].strip()
                         if possible_token and possible_token.lower() not in ("undefined", "null", "none"):
                             captured_token = possible_token
-                            logger.info(f"Token Authorization header'ından başarıyla yakalandı! (URL: {request.url[:80]}...)")
+                            logger.info(_("LOG_TOKEN_CAPTURED_HEADER", url=request.url[:80]))
             except Exception:
                 pass
 
@@ -90,7 +91,7 @@ async def get_auth_token_playwright(username=None, password=None, force_refresh=
                             tok = data.get("access_token") or data.get("token") or data.get("id_token")
                             if tok and str(tok).lower() not in ("undefined", "null", "none"):
                                 captured_token = tok
-                                logger.info(f"Token API yanıtından (JSON) başarıyla yakalandı! (URL: {response.url[:80]}...)")
+                                logger.info(_("LOG_TOKEN_CAPTURED_JSON", url=response.url[:80]))
             except Exception:
                 pass
 
@@ -120,7 +121,7 @@ async def get_auth_token_playwright(username=None, password=None, force_refresh=
             if captured_token:
                 _cached_token = captured_token
                 _token_expiry_time = time.time() + 28800 # 8 saat önbellek
-                logger.info("Token başarıyla alındı ve önbelleğe kaydedildi (Playwright).")
+                logger.info(_("LOG_TOKEN_SAVED"))
                 return _cached_token
 
             print(f"Hata: {max_wait_seconds} saniye içinde token (Authorization Header veya JSON yanıtı) yakalanamadı.")
