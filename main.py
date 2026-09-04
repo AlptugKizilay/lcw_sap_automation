@@ -7,6 +7,7 @@ import time # Gerekirse bekleme süreleri için eklendi
 from src.util.update_json_cache import update_json_cache
 from src.core.workflow_manager import run_full_sap_automation
 from src.sap_automation.sap_connection import get_sap_session
+from src.util.localizer import _
 # Workflow'ları import ediyoruz
 from src.sap_automation.workflows.single_order_flow import run_single_order_workflow, run_modular_single_order_workflow
 from src.sap_automation.workflows.set_order_flow import run_modular_set_order_workflow, run_set_order_workflow, step_set_fiori_zsd
@@ -407,8 +408,8 @@ def start_modular_process(po_no, selected_steps, bridge):
 
             # --- HATA KONTROLÜ VE DURDURMA ---
             if not fiori_success:
-                error_title = "Fiori Veri Hatası"
-                error_msg = "Fiori'den teklif bilgileri (fiyat, üretim yeri vb.) alınamadı!\n\nLütfen Fiori üzerinden modelin plm kodunu ve fiyatını kontrol edin."
+                error_title = _("FIORI_DATA_ERROR_TITLE")
+                error_msg = _("FIORI_DATA_ERROR_MSG")
                 
                 logger.error(f"Otomasyon Durduruldu: {error_msg}")
 
@@ -485,26 +486,11 @@ def run_background_fiori_task(po_no, cache_file_path):
             update_json_cache(cache_file_path, "fiori_status", "FAILED")
             # 2. POP-UP GÖSTER (Thread içinden güvenli çağrı)
             if order_type == "set":
-                error_msg = (
-                    "Fiori'de uygun bir teklif satırı bulunamadı!\n\n"
-                    "NE YAPMALIYIM?\n"
-                    "1- Fiori üzerinden teklif plm kodunu ve fiyatlandırmayı kontrol edip düzeltin.\n"
-                    "Teklif açıklaması PO numasını içermelidir.\n"
-                    "2- Excel dosyanızı doldurmaya devam edebilirsiniz.\n"
-                    "3- İşlemi tamamladığınızda 'SEÇİLİ ADIMLARI BAŞLAT' butonuna basmanız yeterlidir.\n\n"
-                    "NOT: Otomasyon başladığında sistem Fiori verilerini OTOMATİK olarak tekrar kontrol edecektir."
-                )
+                error_msg = _("FIORI_NO_OFFER_MSG_SET")
             else:
-                error_msg = (
-                    "Fiori'de uygun bir teklif satırı bulunamadı!\n\n"
-                    "NE YAPMALIYIM?\n"
-                    "1- Fiori üzerinden teklif plm kodunu ve fiyatlandırmayı kontrol edip düzeltin.\n"
-                    "2- Excel dosyanızı doldurmaya devam edebilirsiniz.\n"
-                    "3- İşlemi tamamladığınızda 'SEÇİLİ ADIMLARI BAŞLAT' butonuna basmanız yeterlidir.\n\n"
-                    "NOT: Otomasyon başladığında sistem Fiori verilerini OTOMATİK olarak tekrar kontrol edecektir."
-                )
+                error_msg = _("FIORI_NO_OFFER_MSG_SINGLE")
             from tkinter import messagebox
-            messagebox.showwarning("Fiori Bilgilendirme", error_msg)
+            messagebox.showwarning(_("FIORI_INFO_TITLE"), error_msg)
             return
         else:
             update_json_cache(cache_file_path, "fiori_status", "SUCCESS")

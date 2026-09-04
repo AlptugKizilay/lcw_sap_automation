@@ -19,8 +19,9 @@ if exist "%ZIP_PATH%" (
     del /f /q "%ZIP_PATH%"
 )
 
-if exist "%TARGET_DIR%\LCW_SAP_Automation.exe" (
-    start "" "%TARGET_DIR%\LCW_SAP_Automation.exe"
+cd /d "%TARGET_DIR%"
+if exist "LCW_SAP_Automation.exe" (
+    explorer.exe "%TARGET_DIR%\LCW_SAP_Automation.exe"
 )
 
 exit

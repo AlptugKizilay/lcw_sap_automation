@@ -7,6 +7,7 @@ import tempfile
 import requests
 import customtkinter as ctk
 from src.util.config_manager import ConfigManager, APP_VERSION
+from src.util.localizer import _
 
 def parse_version(v_str):
     """'1.0.1' gibi metin versiyonlarını karşılaştırılabilir tuple'a çevirir."""
@@ -63,8 +64,8 @@ class UpdateManager:
         download_url = update_data.get("download_url", "")
 
         dialog = ctk.CTkToplevel(app)
-        dialog.title("Yeni Güncelleme Mevcut")
-        dialog.geometry("450x260")
+        dialog.title(_("UPDATE_DIALOG_TITLE"))
+        dialog.geometry("460x320")
         dialog.resizable(False, False)
         dialog.attributes("-topmost", True)
 
@@ -72,46 +73,56 @@ class UpdateManager:
         dialog.update_idletasks()
         screen_width = dialog.winfo_screenwidth()
         screen_height = dialog.winfo_screenheight()
-        x = max(0, (screen_width - 450) // 2)
-        y = max(0, (screen_height - 260) // 2)
-        dialog.geometry(f"450x260+{x}+{y}")
+        x = max(0, (screen_width - 460) // 2)
+        y = max(0, (screen_height - 320) // 2)
+        dialog.geometry(f"460x320+{x}+{y}")
         dialog.lift()
         dialog.focus_force()
 
         title_label = ctk.CTkLabel(
             dialog, 
-            text=f"🚀 Yeni Sürüm Mevcut: v{remote_version}", 
+            text=_("UPDATE_NEW_VERSION_AVAIL", version=remote_version), 
             font=ctk.CTkFont(size=16, weight="bold")
         )
-        title_label.pack(padx=20, pady=(15, 5))
+        title_label.pack(padx=20, pady=(15, 3))
 
         current_label = ctk.CTkLabel(
             dialog, 
-            text=f"Mevcut Sürümünüz: v{APP_VERSION}", 
+            text=_("UPDATE_CURRENT_VERSION", version=APP_VERSION), 
             font=ctk.CTkFont(size=12), text_color="gray"
         )
-        current_label.pack(padx=20, pady=(0, 10))
+        current_label.pack(padx=20, pady=(0, 8))
 
-        textbox = ctk.CTkTextbox(dialog, width=410, height=100)
+        textbox = ctk.CTkTextbox(dialog, width=420, height=90)
         textbox.pack(padx=20, pady=5)
-        textbox.insert("1.0", f"Yenilikler:\n{changelog}")
+        textbox.insert("1.0", f"{_('UPDATE_CHANGELOG_HEADER')}\n{changelog}")
         textbox.configure(state="disabled")
 
+        notice_label = ctk.CTkLabel(
+            dialog,
+            text=_("UPDATE_AUTO_RELAUNCH_NOTICE"),
+            font=ctk.CTkFont(size=11, weight="normal"),
+            text_color="#2563eb",
+            wraplength=420,
+            justify="left"
+        )
+        notice_label.pack(padx=20, pady=(6, 4))
+
         btn_frame = ctk.CTkFrame(dialog, fg_color="transparent")
-        btn_frame.pack(padx=20, pady=10, fill="x")
+        btn_frame.pack(padx=20, pady=(5, 10), fill="x")
 
         def start_update():
             dialog.destroy()
             UpdateManager._download_and_install(app, download_url)
 
         update_btn = ctk.CTkButton(
-            btn_frame, text="Şimdi Güncelle", command=start_update, 
+            btn_frame, text=_("UPDATE_NOW_BTN"), command=start_update, 
             fg_color="#2563eb", hover_color="#1d4ed8"
         )
         update_btn.pack(side="right", padx=5)
 
         later_btn = ctk.CTkButton(
-            btn_frame, text="Daha Sonra", command=dialog.destroy, 
+            btn_frame, text=_("UPDATE_LATER_BTN"), command=dialog.destroy, 
             fg_color="transparent", border_width=1, border_color="gray"
         )
         later_btn.pack(side="right", padx=5)
@@ -122,20 +133,30 @@ class UpdateManager:
             return
 
         progress_dialog = ctk.CTkToplevel(app)
-        progress_dialog.title("Güncelleniyor")
-        progress_dialog.geometry("380x140")
+        progress_dialog.title(_("UPDATING_TITLE"))
+        progress_dialog.geometry("400x150")
         progress_dialog.resizable(False, False)
         progress_dialog.attributes("-topmost", True)
 
+        # Pencereyi ekranın ortasına hizala
+        progress_dialog.update_idletasks()
+        sw = progress_dialog.winfo_screenwidth()
+        sh = progress_dialog.winfo_screenheight()
+        px = max(0, (sw - 400) // 2)
+        py = max(0, (sh - 150) // 2)
+        progress_dialog.geometry(f"400x150+{px}+{py}")
+
         progress_label = ctk.CTkLabel(
             progress_dialog, 
-            text="Güncelleme paketi indiriliyor, lütfen bekleyin...", 
-            font=ctk.CTkFont(size=12)
+            text=_("UPDATE_DOWNLOADING_MSG"), 
+            font=ctk.CTkFont(size=12),
+            wraplength=360,
+            justify="center"
         )
-        progress_label.pack(padx=20, pady=(20, 10))
+        progress_label.pack(padx=20, pady=(15, 10))
 
-        progressbar = ctk.CTkProgressBar(progress_dialog, width=320)
-        progressbar.pack(padx=20, pady=10)
+        progressbar = ctk.CTkProgressBar(progress_dialog, width=340)
+        progressbar.pack(padx=20, pady=5)
         progressbar.set(0)
 
         def download_worker():
@@ -144,6 +165,7 @@ class UpdateManager:
                 zip_path = os.path.join(temp_dir, "lcw_update.zip")
 
                 res = requests.get(download_url, stream=True, timeout=60)
+                total_length = int(res.headers.get('content-length', 0))
 
                 downloaded = 0
                 with open(zip_path, 'wb') as f:
@@ -167,9 +189,9 @@ class UpdateManager:
                     subprocess.Popen(['cmd.exe', '/c', updater_bat, zip_path, target_dir], creationflags=subprocess.CREATE_NO_WINDOW)
                     progress_dialog.after(0, lambda: app.destroy())
                 else:
-                    progress_dialog.after(0, lambda: progress_label.configure(text="Hata: Güncelleme scripti bulunamadı."))
+                    progress_dialog.after(0, lambda: progress_label.configure(text=_("UPDATE_SCRIPT_NOT_FOUND")))
             except Exception as e:
-                progress_dialog.after(0, lambda err=e: progress_label.configure(text=f"İndirme hatası: {err}"))
+                progress_dialog.after(0, lambda err=e: progress_label.configure(text=_("UPDATE_DOWNLOAD_ERR", error=str(err))))
 
         threading.Thread(target=download_worker, daemon=True).start()
 

@@ -167,6 +167,37 @@ TRANSLATIONS = {
         "SAP_CONN_ERROR": "SAP bağlantısı kurulamadı! Lütfen SAP Logon'un açık olduğundan emin olun.",
         "FIORI_DATA_ERROR_TITLE": "Fiori Veri Hatası",
         "FIORI_DATA_ERROR_MSG": "Fiori'den teklif bilgileri (fiyat, üretim yeri vb.) alınamadı!\n\nLütfen Fiori üzerinden modelin plm kodunu ve fiyatını kontrol edin.",
+        "FIORI_INFO_TITLE": "Fiori Bilgilendirme",
+        "FIORI_NO_OFFER_MSG_SET": (
+            "Fiori'de uygun bir teklif satırı bulunamadı!\n\n"
+            "NE YAPMALIYIM?\n"
+            "1- Fiori üzerinden teklif plm kodunu ve fiyatlandırmayı kontrol edip düzeltin.\n"
+            "Teklif açıklaması PO numarasını içermelidir.\n"
+            "2- Excel dosyanızı doldurmaya devam edebilirsiniz.\n"
+            "3- İşlemi tamamladığınızda 'SEÇİLİ ADIMLARI BAŞLAT' butonuna basmanız yeterlidir.\n\n"
+            "NOT: Otomasyon başladığında sistem Fiori verilerini OTOMATİK olarak tekrar kontrol edecektir."
+        ),
+        "FIORI_NO_OFFER_MSG_SINGLE": (
+            "Fiori'de uygun bir teklif satırı bulunamadı!\n\n"
+            "NE YAPMALIYIM?\n"
+            "1- Fiori üzerinden teklif plm kodunu ve fiyatlandırmayı kontrol edip düzeltin.\n"
+            "2- Excel dosyanızı doldurmaya devam edebilirsiniz.\n"
+            "3- İşlemi tamamladığınızda 'SEÇİLİ ADIMLARI BAŞLAT' butonuna basmanız yeterlidir.\n\n"
+            "NOT: Otomasyon başladığında sistem Fiori verilerini OTOMATİK olarak tekrar kontrol edecektir."
+        ),
+
+        # --- Update Manager Strings ---
+        "UPDATE_DIALOG_TITLE": "Yeni Güncelleme Mevcut",
+        "UPDATE_NEW_VERSION_AVAIL": "🚀 Yeni Sürüm Mevcut: v{version}",
+        "UPDATE_CURRENT_VERSION": "Mevcut Sürümünüz: v{version}",
+        "UPDATE_CHANGELOG_HEADER": "Yenilikler:",
+        "UPDATE_AUTO_RELAUNCH_NOTICE": "ℹ️ 'Şimdi Güncelle' butonuna tıkladığınızda uygulama otomatik olarak kapanacak, güncellenecek ve tekrar açılacaktır.",
+        "UPDATE_NOW_BTN": "Şimdi Güncelle",
+        "UPDATE_LATER_BTN": "Daha Sonra",
+        "UPDATING_TITLE": "Güncelleniyor",
+        "UPDATE_DOWNLOADING_MSG": "Güncelleme paketi indiriliyor, lütfen bekleyin...\n(İndirme tamamlandığında uygulama otomatik kapanıp güncellenecektir)",
+        "UPDATE_SCRIPT_NOT_FOUND": "Hata: Güncelleme scripti bulunamadı.",
+        "UPDATE_DOWNLOAD_ERR": "İndirme hatası: {error}",
         "FETCHING_DATA": "VERİ ÇEKİLİYOR...",
         "BRIDGE_ERROR": "Köprü Hatası: {error}",
         "MODULAR_BRIDGE_ERROR": "Modüler Köprü Hatası: {error}",
@@ -481,7 +512,38 @@ TRANSLATIONS = {
         "CACHE_NOT_FOUND": "[CACHE] Local data not found for {po}! Please run 'Create Excel Template' first.",
         "SAP_CONN_ERROR": "SAP connection failed! Please make sure SAP Logon is open.",
         "FIORI_DATA_ERROR_TITLE": "Fiori Data Error",
-        "FIORI_DATA_ERROR_MSG": "Could not retrieve bid information (price, plant, etc.) from Fiori!\n\nPlease check the plm code and pricing of the model on Fiori.",
+        "FIORI_DATA_ERROR_MSG": "Could not retrieve offer details (price, plant, etc.) from Fiori!\n\nPlease check the model PLM code and pricing on Fiori.",
+        "FIORI_INFO_TITLE": "Fiori Information",
+        "FIORI_NO_OFFER_MSG_SET": (
+            "No suitable offer line found in Fiori!\n\n"
+            "WHAT SHOULD I DO?\n"
+            "1- Please check and fix the offer PLM code and pricing on Fiori.\n"
+            "The offer description must include the PO number.\n"
+            "2- You can continue filling out your Excel file.\n"
+            "3- When completed, simply click the 'START SELECTED STEPS' button.\n\n"
+            "NOTE: When automation starts, the system will AUTOMATICALLY check Fiori data again."
+        ),
+        "FIORI_NO_OFFER_MSG_SINGLE": (
+            "No suitable offer line found in Fiori!\n\n"
+            "WHAT SHOULD I DO?\n"
+            "1- Please check and fix the offer PLM code and pricing on Fiori.\n"
+            "2- You can continue filling out your Excel file.\n"
+            "3- When completed, simply click the 'START SELECTED STEPS' button.\n\n"
+            "NOTE: When automation starts, the system will AUTOMATICALLY check Fiori data again."
+        ),
+
+        # --- Update Manager Strings ---
+        "UPDATE_DIALOG_TITLE": "New Update Available",
+        "UPDATE_NEW_VERSION_AVAIL": "🚀 New Version Available: v{version}",
+        "UPDATE_CURRENT_VERSION": "Current Version: v{version}",
+        "UPDATE_CHANGELOG_HEADER": "What's New:",
+        "UPDATE_AUTO_RELAUNCH_NOTICE": "ℹ️ When you click 'Update Now', the application will automatically close, update, and relaunch.",
+        "UPDATE_NOW_BTN": "Update Now",
+        "UPDATE_LATER_BTN": "Remind Later",
+        "UPDATING_TITLE": "Updating",
+        "UPDATE_DOWNLOADING_MSG": "Downloading update package, please wait...\n(App will automatically close and relaunch when done)",
+        "UPDATE_SCRIPT_NOT_FOUND": "Error: Update script not found.",
+        "UPDATE_DOWNLOAD_ERR": "Download error: {error}",
         "FETCHING_DATA": "FETCHING DATA...",
         "BRIDGE_ERROR": "Bridge Error: {error}",
         "MODULAR_BRIDGE_ERROR": "Modular Bridge Error: {error}",
