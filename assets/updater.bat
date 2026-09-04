@@ -13,7 +13,7 @@ if "%ERRORLEVEL%"=="0" (
 
 timeout /t 2 /nobreak >nul
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path '%ZIP_PATH%' -DestinationPath '%TARGET_DIR%' -Force"
+tar -xf "%ZIP_PATH%" -C "%TARGET_DIR%"
 
 if exist "%ZIP_PATH%" (
     del /f /q "%ZIP_PATH%"
