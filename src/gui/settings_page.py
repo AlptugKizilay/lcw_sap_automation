@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from src.util.config_manager import ConfigManager
 from src.util.localizer import _
+from src.util.update_manager import UpdateManager
 from tkinter import messagebox
 
 class SettingsPage(ctk.CTkFrame):
@@ -33,13 +34,46 @@ class SettingsPage(ctk.CTkFrame):
         
         self.combo_lang = self.create_dropdown(_("APP_LANGUAGE_LABEL"), 8, lang_options, initial_display)
 
+        # --- UYGULAMA GÜNCELLEME YÖNETİMİ ---
+        self.create_section_label(_("MANUAL_UPDATE_MGMT"), 9)
+
+        self.update_desc_label = ctk.CTkLabel(
+            self, text=_("MANUAL_UPDATE_DESC"),
+            font=ctk.CTkFont(size=12), text_color="#a1a1aa",
+            wraplength=650, justify="left"
+        )
+        self.update_desc_label.grid(row=10, column=0, padx=25, pady=(0, 10), sticky="w")
+
+        self.update_actions_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.update_actions_frame.grid(row=11, column=0, padx=25, pady=5, sticky="w")
+
+        self.onedrive_btn = ctk.CTkButton(
+            self.update_actions_frame,
+            text=_("OPEN_ONEDRIVE_BTN"),
+            command=UpdateManager.open_onedrive_download_page,
+            height=38, corner_radius=8,
+            fg_color="#0284c7", hover_color="#0369a1",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        self.onedrive_btn.pack(side="left", padx=(0, 15))
+
+        self.install_zip_btn = ctk.CTkButton(
+            self.update_actions_frame,
+            text=_("INSTALL_ZIP_BTN"),
+            command=lambda: UpdateManager.install_local_zip_package(self.winfo_toplevel()),
+            height=38, corner_radius=8,
+            fg_color="#16a34a", hover_color="#15803d",
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        self.install_zip_btn.pack(side="left")
+
         # --- KAYDET BUTONU ---
         self.save_btn = ctk.CTkButton(self, text=_("SAVE_CRED_SECURELY"), 
                                       command=self.save_all_settings,
                                       height=45, corner_radius=10, 
                                       fg_color="#1f538d", hover_color="#14375e",
                                       font=ctk.CTkFont(size=15, weight="bold"))
-        self.save_btn.grid(row=9, column=0, padx=20, pady=40, sticky="ew")
+        self.save_btn.grid(row=12, column=0, padx=20, pady=40, sticky="ew")
 
     def create_section_label(self, text, row):
         lbl = ctk.CTkLabel(self, text=text, font=ctk.CTkFont(size=16, weight="bold"), text_color="#3b8ed0")

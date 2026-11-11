@@ -3,7 +3,7 @@ import keyring
 import os
 
 APP_NAME = "LCW_Automation_2026"
-APP_VERSION = "1.0.2"
+APP_VERSION = "1.0.7"
 
 class ConfigManager:
     CONFIG_DIR = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), APP_NAME)
@@ -20,7 +20,9 @@ class ConfigManager:
     DEFAULTS = {
         # --- UYGULAMA VE GÜNCELLEME AYARLARI ---
         "APP_VERSION": APP_VERSION,
+        "SHARED_VERSION_PATH": r"\\LCW_fileserver\PERSONEL\TAHA\Taha Mena 210\automation_version.txt",
         "UPDATE_CHECK_URL": "https://gist.githubusercontent.com/AlptugKizilay/f7112cf3433f3466dfb28e90cd8cf81a/raw/version.json",
+        "ONEDRIVE_UPDATE_URL": "https://lcwonline-my.sharepoint.com/:f:/g/personal/alptug_kizilay_lcwaikiki_com/IgC6PE25cSwkSYOkkRZJGbP5ARveEDI74S5ubLar196p_XI?e=6XQbbH",
         "AUTO_UPDATE_ENABLED": True,
 
         # --- LCW TEDARİKÇİ PORTALI AYARLARI ---
@@ -82,14 +84,20 @@ class ConfigManager:
     @staticmethod
     def get_setting(key):
         """Ayarı okurken dosya hatalarını tolere eder."""
-        
+        if key == "APP_VERSION":
+            return APP_VERSION
+
         if os.path.exists(ConfigManager.CONFIG_FILE):
             try:
                 with open(ConfigManager.CONFIG_FILE, "r", encoding="utf-8") as f:
                     content = f.read().strip()
                     if content:
                         config = json.loads(content)
-                        return config.get(key, ConfigManager.DEFAULTS.get(key, ""))
+                        val = config.get(key)
+                        if key == "UPDATE_CHECK_URL" and (not val or "api.github.com" in str(val) or "gist" not in str(val)):
+                            return ConfigManager.DEFAULTS.get("UPDATE_CHECK_URL")
+                        if val is not None and val != "":
+                            return val
             except Exception:
                 pass
         

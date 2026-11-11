@@ -811,7 +811,7 @@ def zmm0020_is_plani_adimlari(session, data):
         num_new_rows_needed = len(operations_to_add)
 
         logger.info(f"ZMM0020: {num_new_rows_needed} adet yeni operasyon satırı ekleniyor.")
-        for _ in range(num_new_rows_needed):
+        for add_idx in range(num_new_rows_needed):
             alv_grid.pressToolbarButton("ROW_ADD")
             time.sleep(0.5) # Her satır ekleme sonrası kısa bekleme
 
@@ -1049,7 +1049,7 @@ def _handle_add_components_popupv1(session, components_to_add):
             logger.info(f"{rows_to_insert} adet boş satır ekleniyor...")
             # Mevcut satırın üstüne eklemek için "0" kullanırız.
             # Her "insertRows" çağrısı sadece bir satır ekler.
-            for _ in range(rows_to_insert):
+            for ins_idx in range(rows_to_insert):
                 alv_grid_popup.insertRows("0") 
                 time.sleep(0.8) # Her eklemeden sonra küçük bir bekleme
             time.sleep(1)
@@ -1063,7 +1063,7 @@ def _handle_add_components_popupv1(session, components_to_add):
             if current_row_count <= idx:
                 missing_rows = (idx + 1) - current_row_count
                 logger.info(f"Satır {idx} yazılacak ancak ALV grid satır sayısı {current_row_count}. {missing_rows} adet satır ekleniyor...")
-                for _ in range(missing_rows):
+                for add_row_idx in range(missing_rows):
                     try:
                         alv_grid_popup.pressToolbarButton("ROW_ADD")
                     except Exception:
@@ -1221,7 +1221,7 @@ def _handle_add_components_popup(session, components_to_add):
         
         if rows_to_insert > 0:
             logger.info(f"Pop-up için {rows_to_insert} adet boş satır ekleme deneniyor...")
-            for _ in range(rows_to_insert):
+            for ins_idx in range(rows_to_insert):
                 try:
                     alv_grid_popup.insertRows("0")
                 except Exception as ins_e:
@@ -1438,7 +1438,7 @@ def zmm0020_select_bom_operation_and_add_components(session, excel_bom_file_path
                     time.sleep(0.5) # Hızlandırma
                     print(f"Bileşen ekle pop-up'ına gönderilecek eksik malzemeler: {missing_components_for_op}")
 
-                    success, _ = _handle_add_components_popup(session, missing_components_for_op)
+                    success, res_msg = _handle_add_components_popup(session, missing_components_for_op)
                     if not success:
                         logger.error(f"Operasyon '{excel_operation}' için Bileşen Ekle pop-up'ı yönetilirken hata oluştu. Akış durduruluyor.")
                         return None
@@ -1732,6 +1732,7 @@ def _handle_afs_popupv1(session, bom_item, available_colors, available_sizes, af
                 #print(f"Renk: {col_color}, Beden: {col_size}")
                 #print(f" SELECTED Renk: {selected_colors}, selected Beden: {selected_sizes}")
                 should_fill_cell = False
+                print(f"col_color: {col_color}, col_size: {col_size}, selected_colors: {selected_colors}, selected_sizes: {selected_sizes}")
 
                 # Senaryo 2: Renk: SEÇİMLİ, Beden: TÜMÜ
                 if col_color in selected_colors and \
@@ -1896,7 +1897,7 @@ def _handle_afs_popup(session, variant_items, available_colors, available_sizes,
         for row_idx in range(afs_alv_grid.RowCount):
             row_material_code = afs_alv_grid.GetCellValue(row_idx, ALV_COLUMN_TECHNICAL_NAME_FOR_MATERIAL_CODE)
 
-            #logger.info(f"[{row_idx}/{afs_alv_grid.RowCount - 1}] Satır işleniyor. Malzeme Kodu: {row_material_code}")
+            logger.info(f"[{row_idx}/{afs_alv_grid.RowCount - 1}] Satır işleniyor. Malzeme Kodu: {row_material_code}")
 
             matching_item = next((i for i in variant_items if str(i['MALZEME_KODU']) == str(row_material_code)), None)
 
@@ -1910,7 +1911,7 @@ def _handle_afs_popup(session, variant_items, available_colors, available_sizes,
             selected_sizes = matching_item['SEÇİLİ_BEDENLER']
             quantity_str = str(matching_item['MİKTAR']).replace('.', ',')
 
-            #logger.info(f"  Seçili Renkler: {selected_colors}, Seçili Bedenler: {selected_sizes}, Miktar: {quantity_str}")
+            logger.info(f"  Seçili Renkler: {selected_colors}, Seçili Bedenler: {selected_sizes}, Miktar: {quantity_str}")
 
             for col_info in parsed_columns_info:
                 col_id = col_info['col_id']
@@ -1924,9 +1925,9 @@ def _handle_afs_popup(session, variant_items, available_colors, available_sizes,
                 match_range_yas = re.match(r'(\d+)\s*-\s*(\d+)\s*yaş', col_size)
                 if match_range_yas:
                     col_size = f"{match_range_yas.group(1)}y-{match_range_yas.group(2)}y"
-                #    logger.info(f"    Beden regex ile dönüştürüldü: '{original_col_size}' -> '{col_size}'")
+                    logger.info(f"    Beden regex ile dönüştürüldü: '{original_col_size}' -> '{col_size}'")
                 #else:
-                #    logger.info(f"    Beden regex ile dönüştürülmedi: '{col_size}'")
+                    logger.info(f"    Beden regex ile dönüştürülmedi: '{col_size}'")
 
 
                 should_fill = False
@@ -1936,24 +1937,26 @@ def _handle_afs_popup(session, variant_items, available_colors, available_sizes,
                 cur_is_all_colors = (sorted(selected_colors) == sorted(available_colors) or not selected_colors)
                 cur_is_all_sizes = (sorted(selected_sizes) == sorted(available_sizes) or not selected_sizes)
 
-                #logger.info(f"    Hesaplanan 'cur_is_all_colors': {cur_is_all_colors} (Selected: {selected_colors}, Available: {available_colors})")
-                #logger.info(f"    Hesaplanan 'cur_is_all_sizes': {cur_is_all_sizes} (Selected: {selected_sizes}, Available: {available_sizes})")
+                #logger.info(f"    Hesaplanan 'cur_is_all_colors': {cur_is_all_colors} (Selected: {selected_colors}, Available: {available_colors}) (col_color: {col_color})")
+                #logger.info(f"    Hesaplanan 'cur_is_all_sizes': {cur_is_all_sizes} (Selected: {selected_sizes}, Available: {available_sizes}) (col_size: {col_size})")
+
+                
+                # Beden eşleşme kontrolü: Önce dönüştürülmüş (col_size), eşleşmezse orijinal beden (original_col_size)
+                size_matched = (col_size in selected_sizes) or (original_col_size in selected_sizes)
 
                 # Karar verme mantığı
                 if col_color in selected_colors and cur_is_all_sizes:
                     should_fill = True
                     logger.info(f"    Karar: (Renk eşleşti '{col_color}', tüm bedenler seçili)")
-                elif cur_is_all_colors and col_size in selected_sizes:
+                elif cur_is_all_colors and size_matched:
                     should_fill = True
                     logger.info(f"    Karar: (Tüm renkler seçili, beden eşleşti '{col_size}')")
-                elif col_color in selected_colors and col_size in selected_sizes:
+                elif col_color in selected_colors and size_matched:
                     should_fill = True
-                    logger.info(f"    Karar: (Renk eşleşti '{col_color}', beden eşleşti '{col_size}')")
+                    logger.info(f"    Karar: (Renk eşleşti '{col_color}', beden eşleşti '{col_size}' / '{original_col_size}')")
                 elif cur_is_all_colors and cur_is_all_sizes:
                     should_fill = True
                     logger.info(f"    Karar:  (Tüm renkler ve tüm bedenler seçili)")
-                #else:
-                #    logger.info(f"    Karar: should_fill=False (Hiçbir koşul sağlanmadı)")
 
                 if should_fill:
                     #logger.info(f"      Hücre dolduruluyor: Satır={row_idx}, Sütun={col_id}, Miktar='{quantity_str}'")

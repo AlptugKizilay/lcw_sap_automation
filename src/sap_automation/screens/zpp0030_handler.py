@@ -61,7 +61,7 @@ def _check_and_select_empty_mprod_rows(session: Any) -> bool:
                     
                     # wnd[1] (Pop-up) gelene kadar bekle (Maksimum 10 saniye)
                     popup_found = False
-                    for _ in range(20): # 20 * 0.5sn = 10 saniye
+                    for wait_idx in range(20): # 20 * 0.5sn = 10 saniye
                         if session.Children.Count > 1: # wnd[1] varsa Children sayısı 1'den büyüktir
                             popup_found = True
                             break

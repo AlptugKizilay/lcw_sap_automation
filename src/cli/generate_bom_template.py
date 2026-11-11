@@ -35,7 +35,8 @@ def generate_bom_template_cli(data):
         # EĞER bu sadece sıra numaralarıysa, zmm0020_beden_secimi'nde gerçek beden isimlerini çekmeliyiz.
         available_sizes = [str(s) for s in data['sizes']] if 'sizes' in data else []
         if not available_sizes:
-            logger.warning(_("LOG_NO_SIZE_CODE"))
+            logger.error(_("LOG_NO_SIZE_CODE"))
+            raise ValueError("Beden (Size) bilgisi boş! Excel şablonu oluşturulamaz.")
 
         logger.info(_("LOG_BOM_TEMPLATE_INFO", plm_id=plm_id, colors=available_colors, sizes=available_sizes))
         
@@ -61,6 +62,9 @@ def generate_set_bom_template_cli(data):
         plm_id = data.get('plm_code')
         style_name = data.get('styleName')
         available_sizes = [str(s) for s in data.get('sizes', [])]
+        if not available_sizes:
+            logger.error(_("LOG_NO_SIZE_CODE"))
+            raise ValueError("Beden (Size) bilgisi boş! Set Excel şablonu oluşturulamaz.")
         childrens = data.get('childrens', [])
         po_no = data.get('po_no')
         order_color_code = data.get('order_color_code', [])

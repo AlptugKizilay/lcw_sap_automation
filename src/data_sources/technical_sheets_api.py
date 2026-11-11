@@ -13,6 +13,9 @@ def get_common_headers(token):
         "Accept-Encoding": "gzip, deflate, br, zstd",
         "Accept-Language": "en-US,en;q=0.9,tr;q=0.8",
         "Authorization": f"Bearer {token}",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Origin": "https://supplierportal.lcwaikiki.com",
+        "Referer": "https://supplierportal.lcwaikiki.com/",
     }
 
 def get_technical_sheets(model_id, token):

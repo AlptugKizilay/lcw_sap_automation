@@ -102,9 +102,11 @@ class LCWAutomationApp(ctk.CTk):
         # --- 4. FOOTER ---
         self.version_label = ctk.CTkLabel(
             self.sidebar_frame, text=f"v{APP_VERSION}", 
-            font=ctk.CTkFont(size=10, weight="bold"), text_color="#52525b"
+            font=ctk.CTkFont(size=10, weight="bold"), text_color="#52525b",
+            cursor="hand2"
         )
         self.version_label.grid(row=4, column=0, sticky="s", pady=20)
+        self.version_label.bind("<Button-1>", lambda e: self.show_settings())
 
         # --- 5. ANA İÇERİK ALANI ---
         self.content_frame = ctk.CTkFrame(self, corner_radius=0, fg_color=self.theme["content_bg"])

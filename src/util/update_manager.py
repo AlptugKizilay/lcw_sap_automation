@@ -1,18 +1,26 @@
 import os
+import re
 import sys
+import time
 import json
 import threading
 import subprocess
 import tempfile
+import webbrowser
+import zipfile
 import requests
 import customtkinter as ctk
+from tkinter import filedialog, messagebox
 from src.util.config_manager import ConfigManager, APP_VERSION
 from src.util.localizer import _
 
 def parse_version(v_str):
     """'1.0.1' gibi metin versiyonlarını karşılaştırılabilir tuple'a çevirir."""
     try:
-        clean_v = v_str.lstrip('vV').strip()
+        match = re.search(r'(\d+(?:\.\d+)+)', str(v_str))
+        if match:
+            return tuple(map(int, match.group(1).split('.')))
+        clean_v = str(v_str).lstrip('\ufeffvV').strip()
         return tuple(map(int, clean_v.split('.')))
     except Exception:
         return (0, 0, 0)
@@ -26,6 +34,118 @@ def resource_path(relative_path):
 
 class UpdateManager:
     @staticmethod
+    def open_onedrive_download_page():
+        """Kurumsal OneDrive indirme sayfasını varsayılan tarayıcıda açar."""
+        url = ConfigManager.get_setting("ONEDRIVE_UPDATE_URL")
+        if url:
+            webbrowser.open(url)
+
+    @staticmethod
+    def install_local_zip_package(app=None):
+        """Kullanıcının seçtiği indirilen ZIP paketini 3 kademeli doğrulamadan geçirip updater.bat ile kurar."""
+        zip_path = filedialog.askopenfilename(
+            title=_("SELECT_ZIP_TITLE"),
+            filetypes=[("Zip Paketleri", "*.zip"), ("Tüm Dosyalar", "*.*")]
+        )
+        if not zip_path:
+            return
+
+        # 1. Aşama: Dosya var mı?
+        if not os.path.exists(zip_path):
+            messagebox.showerror(_("INVALID_ZIP_ERR").split("!")[0], _("INVALID_ZIP_ERR"))
+            return
+
+        # 2. Aşama: Geçerli bir ZIP arşivi mi?
+        if not zipfile.is_zipfile(zip_path):
+            messagebox.showerror(_("INVALID_ZIP_ERR").split("!")[0], _("INVALID_ZIP_ERR"))
+            return
+
+        # 3. Aşama: İçerik Doğrulama (LCW_SAP_Automation uygulamasını içeriyor mu?)
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as z:
+                members = z.namelist()
+                valid_signatures = ["LCW_SAP_Automation.exe", "main.py", "main_gui.py", "src/"]
+                has_app = any(sig in member or member.startswith("src/") for member in members for sig in valid_signatures)
+                if not has_app:
+                    messagebox.showerror(_("INVALID_ZIP_ERR").split("!")[0], _("INVALID_ZIP_ERR"))
+                    return
+        except Exception:
+            messagebox.showerror(_("INVALID_ZIP_ERR").split("!")[0], _("INVALID_ZIP_ERR"))
+            return
+
+        filename = os.path.basename(zip_path)
+        confirm = messagebox.askyesno(
+            _("SELECT_ZIP_TITLE"),
+            _("ZIP_INSTALL_CONFIRM", filename=filename)
+        )
+        if not confirm:
+            return
+
+        updater_bat = resource_path(os.path.join("assets", "updater.bat"))
+        if getattr(sys, 'frozen', False):
+            target_dir = os.path.dirname(sys.executable)
+        else:
+            target_dir = os.path.abspath(".")
+
+        if os.path.exists(updater_bat):
+            subprocess.Popen(['cmd.exe', '/c', updater_bat, zip_path, target_dir], creationflags=subprocess.CREATE_NO_WINDOW)
+            if app:
+                app.destroy()
+        else:
+            messagebox.showerror(_("INVALID_ZIP_ERR").split("!")[0], _("UPDATE_SCRIPT_NOT_FOUND"))
+
+    @staticmethod
+    def _show_network_error_dialog(app):
+        """Ağ engeli nedeniyle otomatik indirme başarısız olduğunda Ayarlar sayfasına yönlendiren diyalog."""
+        dialog = ctk.CTkToplevel(app)
+        dialog.title(_("NETWORK_ERR_REDIRECT_TITLE"))
+        dialog.geometry("460x250")
+        dialog.resizable(False, False)
+        dialog.attributes("-topmost", True)
+
+        dialog.update_idletasks()
+        sw = dialog.winfo_screenwidth()
+        sh = dialog.winfo_screenheight()
+        x = max(0, (sw - 460) // 2)
+        y = max(0, (sh - 250) // 2)
+        dialog.geometry(f"460x250+{x}+{y}")
+        dialog.lift()
+        dialog.focus_force()
+
+        lbl_title = ctk.CTkLabel(
+            dialog,
+            text=_("NETWORK_ERR_REDIRECT_TITLE"),
+            font=ctk.CTkFont(size=15, weight="bold"),
+            text_color="#eab308"
+        )
+        lbl_title.pack(padx=20, pady=(20, 10))
+
+        lbl_msg = ctk.CTkLabel(
+            dialog,
+            text=_("NETWORK_ERR_REDIRECT_MSG"),
+            font=ctk.CTkFont(size=12),
+            wraplength=420,
+            justify="center"
+        )
+        lbl_msg.pack(padx=20, pady=(0, 15))
+
+        def go_settings():
+            dialog.destroy()
+            if hasattr(app, 'show_settings'):
+                app.show_settings()
+            UpdateManager.open_onedrive_download_page()
+
+        btn_go = ctk.CTkButton(
+            dialog,
+            text=_("GO_TO_SETTINGS_BTN"),
+            command=go_settings,
+            fg_color="#0284c7", hover_color="#0369a1",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            height=38
+        )
+        btn_go.pack(pady=10)
+
+    @staticmethod
     def check_for_updates_async(app):
         """Arka planda (Thread) versiyon kontrolünü başlatır."""
         if not ConfigManager.get_setting("AUTO_UPDATE_ENABLED"):
@@ -36,12 +156,54 @@ class UpdateManager:
 
     @staticmethod
     def _check_worker(app):
+        # 1. ÖNCELİKLİ KONTROL: Şirket içi Ortak Klasördeki (UNC Path) versiyon dosyası
+        shared_path = ConfigManager.get_setting("SHARED_VERSION_PATH")
+        if shared_path and os.path.exists(shared_path):
+            try:
+                with open(shared_path, "r", encoding="utf-8-sig") as f:
+                    content = f.read().strip()
+                
+                # 'APP_VERSION = "1.0.2"' veya direkt '1.0.2' formatını ayrıştır
+                match = re.search(r'(\d+(?:\.\d+)+)', content)
+                if match:
+                    remote_version_str = match.group(1)
+                elif "=" in content:
+                    remote_version_str = content.split("=")[-1].strip().strip('"\'')
+                else:
+                    remote_version_str = content.strip()
+
+                remote_v = parse_version(remote_version_str)
+                local_v = parse_version(APP_VERSION)
+
+                if remote_v > local_v:
+                    github_release_url = f"https://github.com/AlptugKizilay/lcw_sap_automation/releases/download/v{remote_version_str}/LCW_SAP_Automation_v{remote_version_str}.zip"
+                    data = {
+                        "version": remote_version_str,
+                        "changelog": f"Ortak klasör üzerinden yeni güncelleme yayınlandı (v{remote_version_str}).",
+                        "download_url": github_release_url
+                    }
+                    app.after(0, lambda: UpdateManager._show_update_dialog(app, data))
+                    return
+            except Exception as e:
+                print(f"[UpdateManager] Ortak klasör (UNC) okuma hatası: {e}")
+
+        # 2. İKİNCİL KONTROL (Fallback): GitHub Gist
         url = ConfigManager.get_setting("UPDATE_CHECK_URL")
         if not url:
             return
 
         try:
-            response = requests.get(url, timeout=5, headers={"User-Agent": "LCW_SAP_Automation_App"})
+            sep = "&" if "?" in url else "?"
+            bust_url = f"{url}{sep}t={int(time.time())}"
+            response = requests.get(
+                bust_url,
+                timeout=5,
+                headers={
+                    "User-Agent": "LCW_SAP_Automation_App",
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                },
+            )
             if response.status_code == 200:
                 data = response.json()
                 remote_version_str = data.get("version", "0.0.0")
@@ -55,7 +217,8 @@ class UpdateManager:
             else:
                 print(f"[UpdateManager] Güncelleme sunucusu HTTP {response.status_code} döndürdü. (Erişim engeli veya gizli repo olabilir)")
         except Exception as e:
-            print(f"[UpdateManager] Güncelleme kontrolü sırasında hata: {e}")
+            # Ağ kısıtlaması (Mısır / Gist engeli) olan lokasyonlarda sessizce yakala
+            print(f"[UpdateManager] Otomatik güncelleme kontrolü atlandı (Ağ/Erişim Engeli): {e}")
 
     @staticmethod
     def _show_update_dialog(app, update_data):
@@ -113,7 +276,11 @@ class UpdateManager:
 
         def start_update():
             dialog.destroy()
-            UpdateManager._download_and_install(app, download_url)
+            if download_url:
+                UpdateManager._download_and_install(app, download_url)
+            else:
+                UpdateManager.open_onedrive_download_page()
+                UpdateManager.install_local_zip_package(app)
 
         update_btn = ctk.CTkButton(
             btn_frame, text=_("UPDATE_NOW_BTN"), command=start_update, 
@@ -130,6 +297,8 @@ class UpdateManager:
     @staticmethod
     def _download_and_install(app, download_url):
         if not download_url:
+            UpdateManager.open_onedrive_download_page()
+            UpdateManager.install_local_zip_package(app)
             return
 
         progress_dialog = ctk.CTkToplevel(app)
@@ -164,7 +333,7 @@ class UpdateManager:
                 temp_dir = tempfile.gettempdir()
                 zip_path = os.path.join(temp_dir, "lcw_update.zip")
 
-                res = requests.get(download_url, stream=True, timeout=60)
+                res = requests.get(download_url, stream=True, timeout=10)
                 total_length = int(res.headers.get('content-length', 0))
 
                 downloaded = 0
@@ -178,6 +347,9 @@ class UpdateManager:
                                 progress_dialog.after(0, lambda p=percent: progressbar.set(p))
 
                 # İndirilen dosyanın geçerli bir ZIP olduğunu doğrula
+                if not zipfile.is_zipfile(zip_path):
+                    raise ValueError(f"İndirilen dosya geçerli bir ZIP arşivi değil: {download_url}")
+
                 updater_bat = resource_path(os.path.join("assets", "updater.bat"))
                 
                 if getattr(sys, 'frozen', False):
@@ -191,7 +363,11 @@ class UpdateManager:
                 else:
                     progress_dialog.after(0, lambda: progress_label.configure(text=_("UPDATE_SCRIPT_NOT_FOUND")))
             except Exception as e:
-                progress_dialog.after(0, lambda err=e: progress_label.configure(text=_("UPDATE_DOWNLOAD_ERR", error=str(err))))
+                # İndirme başarısız (Ağ Kısıtlaması / Mısır ofisi vb.) -> Ayarlar sayfasına yönlendir!
+                print(f"[UpdateManager] Otomatik indirme hatası (Ağ kısıtlaması): {e}")
+                progress_dialog.after(0, lambda: progress_dialog.destroy())
+                if app:
+                    app.after(0, lambda: UpdateManager._show_network_error_dialog(app))
 
         threading.Thread(target=download_worker, daemon=True).start()
 

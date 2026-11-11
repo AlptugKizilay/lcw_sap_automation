@@ -40,7 +40,7 @@ JSON_CACHE_DIR = "cache" # Cache dosyalarının saklanacağı dizin
 
 # --- GELİŞTİRME MODU AYARLARI (MEVCUT KALSIN) ---
 USE_STATIC_JSON = False # True JSON'u dosyadan okur. False API'den çeker.
-STATIC_JSON_PATH = "src\data\dev_single_order_data.json" # Statik JSON dosyasının yolu
+STATIC_JSON_PATH = r"src\data\dev_single_order_data.json" # Statik JSON dosyasının yolu
 # -------------------------------------------------
 
 if __name__ == "__main__":
@@ -314,6 +314,17 @@ def start_automation_process(hedef_siparis_kodu, create_template):
             )        
             
             if final_json_output:
+                check_data = final_json_output[0] if isinstance(final_json_output, list) else final_json_output
+                if not check_data.get("sizes"):
+                    err_msg = f"Sipariş ({hedef_siparis_kodu}) için Beden (Size) bilgisine ulaşılamadı! Excel şablonu oluşturulmadı."
+                    logger.error(err_msg)
+                    try:
+                        from tkinter import messagebox
+                        messagebox.showerror("Beden Bilgisi Hatası", err_msg)
+                    except Exception:
+                        pass
+                    return False
+
                 with open(json_cache_file_path, 'w', encoding='utf-8') as f:
                     json.dump(final_json_output, f, indent=4, ensure_ascii=False)
                 logger.info(f"Veri JSON olarak kaydedildi.")
@@ -326,16 +337,25 @@ def start_automation_process(hedef_siparis_kodu, create_template):
         order_data = final_json_output[0] if isinstance(final_json_output, list) else final_json_output
         order_type = str(order_data.get("orderType", "")).lower()
 
+        if not order_data.get("sizes"):
+            logger.error(f"Sipariş ({hedef_siparis_kodu}) için Beden (Size) bilgisi boş! İşlem durduruldu.")
+            return False
+
         # 3. AKSİYON BELİRLEME
         if not create_template: # EXCEL OLUŞTURMA MODU
             logger.info(f"Excel şablonu oluşturuluyor... Tür: {order_type}")
+            template_path = None
             if order_type == "single":
                 from src.cli.generate_bom_template import generate_bom_template_cli
-                generate_bom_template_cli(order_data)
+                template_path = generate_bom_template_cli(order_data)
             elif order_type == "set":
                 from src.cli.generate_bom_template import generate_set_bom_template_cli
-                generate_set_bom_template_cli(order_data)
+                template_path = generate_set_bom_template_cli(order_data)
             
+            if not template_path:
+                logger.error("Excel şablonu oluşturulamadı! İşlem durduruldu.")
+                return False
+
             logger.info("Excel şablonu başarıyla oluşturuldu.")
             
             # --- B. FIORI ARKA PLAN THREAD'İ (Hemen ardından ateşlenir) ---

@@ -635,7 +635,7 @@ def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_p
                     # PLM Gönder
                     if page.locator("#__button6").is_visible():
                         page.click("#__button6")
-                        for _ in range(2):
+                        for try_idx in range(2):
                             btn = "span[id^='__mbox-btn-'][id$='-inner']"
                             page.wait_for_selector(btn, timeout=10000)
                             page.click(btn)
@@ -644,7 +644,7 @@ def zsd0010_process_plm_items_v2(page: Page, plm_code_to_filter: str, expected_p
                     # Müşteri Onayı
                     if page.locator("#__button2").is_visible():
                         page.click("#__button2")
-                        for _ in range(2):
+                        for try_idx in range(2):
                             btn = "span[id^='__mbox-btn-'][id$='-inner']"
                             page.wait_for_selector(btn, timeout=10000)
                             page.click(btn)
@@ -709,11 +709,14 @@ def _handle_set_bom_size_sub_grid(session, data, fiori_map):
     """
     try:
         # Alt Grid (wnd[2]) nesnesi
-        child_grid = session.findById("wnd[2]/usr/cntlGRID1/shellcont/shell")
+        child_grid = session.findById("wnd[2]/usr/cntlGRID1/shellcont/shell", False)
+        if not child_grid:
+            child_grid = session.findById("wnd[2]/usr/cntlSCR_CONT/shellcont/shell")
         childrens = data.get('childrens', [])
 
         for r in range(child_grid.RowCount):
             # SATNR (Malzeme No) al
+            
             sap_mat = str(child_grid.GetCellValue(r, "SATNR")).strip()
             logger.info(_("LOG_ZSD0010_SUBGRID_ROW", row=r, mat=sap_mat))
             
@@ -745,38 +748,53 @@ def _handle_set_bom_size_sub_grid(session, data, fiori_map):
         child_grid.pressEnter()
         time.sleep(0.5)
         try:
-            sub_grid = session.findById("wnd[2]/usr/cntlGRID1/shellcont/shell")
-            
-            # 1. &ETA (Hesapla/Dağıt) Butonuna Bas
-            logger.info(_("LOG_ZSD0010_CHECK_ETA"))
-            safe_press_grid_button(sub_grid, "&ETA", "Hesapla/Dağıt")
-            
-            # 2. &CHECK (Kontrol Et) Butonuna Bas
-            logger.info(_("LOG_ZSD0010_CHECK_CHECK"))
-            safe_press_grid_button(sub_grid, "&CHECK", "Kontrol Et")
+#            sub_grid = session.findById("wnd[2]/usr/cntlGRID1/shellcont/shell", False)
+#            if not sub_grid:
+#                sub_grid = session.findById("wnd[2]/usr/cntlSCR_CONT/shellcont/shell")
+#            
+#            # 1. &ETA (Hesapla/Dağıt) Butonuna Bas
+#            logger.info(_("LOG_ZSD0010_CHECK_ETA"))
+#            safe_press_grid_button(sub_grid, "&ETA", "Hesapla/Dağıt")
+#            
+#            # 2. &CHECK (Kontrol Et) Butonuna Bas
+#            logger.info(_("LOG_ZSD0010_CHECK_CHECK"))
+#            safe_press_grid_button(sub_grid, "&CHECK", "Kontrol Et")
+#
+#            # 3. STATUS BAR KONTROLÜ
+#            # Not: SAP'de pop-up (wnd[2]) açık olsa bile hata mesajları ana pencerenin (wnd[0]) sbar'ına düşer.
+#            sbar = session.findById("wnd[0]/sbar")
+#            msg_type = sbar.messageType # 'E' (Hata), 'W' (Uyarı), 'S' (Başarı)
+#            msg_text = sbar.text
+#
+#            if msg_type == "E":
+#                # Eğer Status Bar'da bir hata ("E") varsa işlemi durdur ve hata fırlat
+#                logger.error(_("LOG_ZSD0010_SUBGRID_MSG_ERR", msg=msg_text))
+#                # Hata anında ekran görüntüsü (Opsiyonel)
+#                # page.screenshot(path="alt_grid_error.png") 
+#                raise Exception(f"SAP Alt Grid Doğrulama Hatası: {msg_text}")
+#            
+#            elif msg_type == "W":
+#                # Uyarı ("W") varsa logla ama devam et (veya duruma göre raise et)
+#                logger.warning(_("LOG_ZSD0010_SUBGRID_MSG_WARN", msg=msg_text))
+#            
+#            else:
+#                logger.info(_("LOG_ZSD0010_SUBGRID_MSG_SUCCESS", msg=msg_text))
 
-            # 3. STATUS BAR KONTROLÜ
-            # Not: SAP'de pop-up (wnd[2]) açık olsa bile hata mesajları ana pencerenin (wnd[0]) sbar'ına düşer.
-            sbar = session.findById("wnd[0]/sbar")
-            msg_type = sbar.messageType # 'E' (Hata), 'W' (Uyarı), 'S' (Başarı)
-            msg_text = sbar.text
-
-            if msg_type == "E":
-                # Eğer Status Bar'da bir hata ("E") varsa işlemi durdur ve hata fırlat
-                logger.error(_("LOG_ZSD0010_SUBGRID_MSG_ERR", msg=msg_text))
-                # Hata anında ekran görüntüsü (Opsiyonel)
-                # page.screenshot(path="alt_grid_error.png") 
-                raise Exception(f"SAP Alt Grid Doğrulama Hatası: {msg_text}")
-            
-            elif msg_type == "W":
-                # Uyarı ("W") varsa logla ama devam et (veya duruma göre raise et)
-                logger.warning(_("LOG_ZSD0010_SUBGRID_MSG_WARN", msg=msg_text))
-            
-            else:
-                logger.info(_("LOG_ZSD0010_SUBGRID_MSG_SUCCESS", msg=msg_text))
+            # wnd[3] Uyarı / Warning pop-up kontrolü (çıkmayana kadar kapat)
+            while True:
+                wnd3 = session.findById("wnd[3]", False)
+                if not wnd3:
+                    break
+                wnd3_title = str(wnd3.Text).strip().lower()
+                if "uyarı" in wnd3_title or "uyari" in wnd3_title or "warning" in wnd3_title:
+                    logger.info(f"ZSD0010: wnd[3] uyarı pop-up'ı algılandı ('{wnd3.Text}'), kapatılıyor...")
+                    session.findById("wnd[3]/tbar[0]/btn[0]").press()
+                    time.sleep(0.5)
+                else:
+                    break
 
             # 4. Her şey yolundaysa alt gridi onayla/kapat
-            session.findById("wnd[2]/tbar[0]/btn[0]").press() # Tamam (Enter)
+            session.findById("wnd[2]/tbar[0]/btn[8]").press() # Tamam (Enter)
             logger.info(_("LOG_ZSD0010_BTN0_PRESSED"))
             time.sleep(1)
 
@@ -863,24 +881,81 @@ def zsd0010_process_order_integration_gui_v2(session, data, collected_data) -> b
             for i in range(row_count):
                 logger.info(_("LOG_ZSD0010_POPUP_ROW_PROCESSING", current=i+1, total=row_count))
                 
-                # İlgili satıra odaklan ve BOM_SIZE butonuna bas
-                popup_grid.currentCellRow = i
-                popup_grid.currentCellColumn = "BOM_SIZE_BTN"
+                # İlgili satıra odaklan ve BOM_SIZE butonuna bas (Maksimum 3 deneme)
+                subgrid_success = False
+                max_attempts = 3
                 
-                # Butona bas (Bu işlem wnd[2] alt gridini açar)
-                try:
-                    time.sleep(2)
-                    popup_grid.pressButtonCurrentCell()
-                    time.sleep(2)
-                    
-                    # Alt Gridi (wnd[2]) dolduran yardımcı fonksiyonu çağır
-                    # Bu fonksiyon wnd[2]'yi doldurup kapatacak (btn[0] ile)
-                    _handle_set_bom_size_sub_grid(session, data, fiori_map)
-                    
-                    logger.info(_("LOG_ZSD0010_ROW_SUBGRID_DONE", row=i))
-                except Exception as e_row:
-                    logger.warning(_("LOG_ZSD0010_BOM_SIZE_BTN_ERR", row=i, error=str(e_row)))
-                    continue
+                for attempt in range(max_attempts):
+                    try:
+                        popup_grid.currentCellRow = i
+                        popup_grid.currentCellColumn = "BOM_SIZE_BTN"
+                        time.sleep(2)
+                        popup_grid.pressButtonCurrentCell()
+                        time.sleep(2)
+                        
+                        # Olası BOM Hata Pop-up'ı kontrolü (wnd[2])
+                        wnd2 = session.findById("wnd[2]", False)
+                        is_bom_error = False
+                        err_msg = ""
+
+                        if wnd2:
+                            # Alt grid shell'i var mı? (Normal BOM doldurma penceresi mi?)
+                            #subgrid_shell = session.findById("wnd[2]/usr/cntlGRID1/shellcont/shell", False)
+                            try:
+                                msg_text = wnd2.findById("usr/txtS_POPUP-TEXT").text
+                            except:
+                                msg_text = wnd2.Text # Fallback: Pencere başlığı veya genel text
+                            logger.info(_("LOG_ZSD0010_POPUP_MSG", msg=msg_text))
+                            
+                            # Eğer alt grid shell'i YOKSA bu bir uyarı/hata pop-up'ıdır
+                            if msg_text != "Bom":
+                                is_bom_error = True
+                                wnd2_text = ""
+                                try:
+                                    wnd2_text = str(wnd2.Text)
+                                    txt_obj = wnd2.findById("usr/txtS_POPUP-TEXT", False)
+                                    if txt_obj:
+                                        wnd2_text += " " + str(txt_obj.text)
+                                except:
+                                    pass
+                                sbar = session.findById("wnd[0]/sbar", False)
+                                sbar_text = str(sbar.text) if sbar else ""
+                                err_msg = wnd2_text or sbar_text or "BOM alt grid açılamadı / Hata pop-up'ı"
+
+                        if is_bom_error:
+                            logger.warning(f"ZSD0010: Satır {i+1} için BOM hata pop-up'ı algılandı: '{err_msg}'. Pop-up kapatılıyor ve 4 saniye beklenip tekrar deneniyor (Deneme {attempt+1}/{max_attempts})...")
+                            try:
+                                if wnd2:
+                                    # Pop-up'ı kapat (btn[0] veya VKey(0))
+                                    close_btn = wnd2.findById("tbar[0]/btn[0]", False)
+                                    if close_btn:
+                                        close_btn.press()
+                                    else:
+                                        wnd2.sendVKey(0)
+                            except Exception as e_close:
+                                logger.debug(f"Hata pop-up'ı kapatılırken uyarı: {e_close}")
+                            
+                            time.sleep(4)
+                            continue # Tekrar dene
+                        
+                        # Alt Gridi (wnd[2]) dolduran yardımcı fonksiyonu çağır
+                        _handle_set_bom_size_sub_grid(session, data, fiori_map)
+                        subgrid_success = True
+                        logger.info(_("LOG_ZSD0010_ROW_SUBGRID_DONE", row=i))
+                        break # Başarılı, deneme döngüsünden çık
+                        
+                    except Exception as e_row:
+                        logger.warning(f"ZSD0010: Satır {i+1} BOM_SIZE denemesi {attempt+1}/{max_attempts} hatası: {e_row}")
+                        try:
+                            wnd2_err = session.findById("wnd[2]", False)
+                            if wnd2_err:
+                                btn = wnd2_err.findById("tbar[0]/btn[0]", False)
+                                if btn: btn.press()
+                        except: pass
+                        time.sleep(4)
+
+                if not subgrid_success:
+                    logger.error(f"ZSD0010: Satır {i+1} için {max_attempts} denemede de BOM alt grid işlemi tamamlanamadı.")
                 
         # 6. Final Kayıt (Pop-up üzerindeki Onay butonu)
         session.findById("wnd[1]/tbar[0]/btn[8]").press()

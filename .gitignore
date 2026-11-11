@@ -21,10 +21,6 @@ browsers/
 cache/
 json_output/
 *.log
-# Environment Variables & Config
-.env
-.env.*
-!.env.example
 config.json
 data/material_cache.json
 LCW_Automation_Outputs/
@@ -34,3 +30,4 @@ LCW_Automation_Outputs/
 .idea/
 *.swp
 *.swo
+

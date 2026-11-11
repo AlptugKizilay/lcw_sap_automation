@@ -2,7 +2,7 @@
 ; LCW SAP Otomasyonu v1.0.0
 
 #define MyAppName "LCW SAP Otomasyonu"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.7"
 #define MyAppPublisher "LCWaikiki"
 #define MyAppExeName "LCW_SAP_Automation.exe"
 
@@ -17,7 +17,7 @@ DisableProgramGroupPage=yes
 ; Yönetici (Admin) yetkisi gerektirmeden kullanıcı seviyesinde kurulum (Per-User)
 PrivilegesRequired=lowest
 OutputDir=..\dist_setup
-OutputBaseFilename=LCW_SAP_Automation_Setup_v1.0.0
+OutputBaseFilename=LCW_SAP_Automation_v1.0.7_Setup
 SetupIconFile=..\app_icon.ico
 Compression=lzma2/ultra64
 SolidCompression=yes

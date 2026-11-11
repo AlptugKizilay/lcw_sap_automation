@@ -19,23 +19,31 @@ def transform_df_to_json(df, siparis_kodu, published_label_id, country_id, produ
     if df.empty:
         return {"error": f"Sipariş kodu '{siparis_kodu}' için dönüştürülecek veri bulunamadı."}
 
-    # --- Beden bilgilerini API'den çekme ---
+    # --- Beden bilgilerini API'den çekme (Boş gelirse token yenileyip tekrar dene) ---
     sizes_list = []
-    try:
-        product_list_for_payload = get_product_list_from_order_code(siparis_kodu, published_label_id, country_id, product_search_type, auth_token)
-        if product_list_for_payload:
-            #print(f"product_list_for_payload: {product_list_for_payload}")
-            beden_bilgileri = get_product_information_and_beden(product_list_for_payload, siparis_kodu, country_id, published_label_id, auth_token)
-            if beden_bilgileri:
-                #print(f"beden_bilgileri: {beden_bilgileri}")
-                sizes_list = sorted(list(set([item['value'] for item in beden_bilgileri])))
+    for size_attempt in range(2):
+        try:
+            product_list_for_payload = get_product_list_from_order_code(siparis_kodu, published_label_id, country_id, product_search_type, auth_token)
+            if product_list_for_payload:
+                beden_bilgileri = get_product_information_and_beden(product_list_for_payload, siparis_kodu, country_id, published_label_id, auth_token)
+                if beden_bilgileri:
+                    sizes_list = sorted(list(set([item['value'] for item in beden_bilgileri if item.get('value')])))
+                else:
+                    print(f"Uyarı: Sipariş kodu {siparis_kodu} için beden bilgisi bulunamadı (Deneme {size_attempt + 1}/2).")
             else:
-                print(f"Uyarı: Sipariş kodu {siparis_kodu} için beden bilgisi bulunamadı.")
-        else:
-            print(f"Uyarı: Sipariş kodu {siparis_kodu} için ProductList API'den boş geldi veya hata oluştu.")
-    except Exception as e:
-        print(f"Beden bilgisi çekerken hata oluştu: {e}")
-        sizes_list = []
+                print(f"Uyarı: Sipariş kodu {siparis_kodu} için ProductList API'den boş geldi veya hata oluştu (Deneme {size_attempt + 1}/2).")
+        except Exception as e:
+            print(f"Beden bilgisi çekerken hata oluştu (Deneme {size_attempt + 1}/2): {e}")
+            sizes_list = []
+
+        if sizes_list:
+            break
+        if size_attempt == 0:
+            print("Beden bilgisi alınamadı, token yenilenerek tekrar deneniyor...")
+            from src.auth.auth_manager_playwright import get_token_sync
+            new_token = get_token_sync(force_refresh=True)
+            if new_token:
+                auth_token = new_token
     # ----------------------------------------
    
     

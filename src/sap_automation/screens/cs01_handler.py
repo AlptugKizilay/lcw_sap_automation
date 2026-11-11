@@ -84,16 +84,52 @@ def _fill_variant_matrix_grid(session: Any, main_order_data: Dict[str, Any], var
                     # Bileşen Renk Filtresi
                     session.findById("wnd[0]/usr/subFLTR_SUBSCR:SAPLFSH_PP_BD_BOM:0111/ctxtGS_COMP_FILTER-DIM1").text = comp_color
                     session.findById("wnd[0]/usr/subFLTR_SUBSCR:SAPLFSH_PP_BD_BOM:0111/btnCMDFILTER").press()
-                    time.sleep(0.5)
+                    time.sleep(1.0)
 
                     # 4. Matrisi (Bedenleri) Doldur
                     matrix_shell = session.findById("wnd[0]/usr/subFLTR_SUBSCR:SAPLFSH_PP_BD_BOM:0111/subMATRIX:SAPLFSH_PP_BD_BOM:0112/cntlFSH_SKUCHAR/shellcont/shell")
                     
-                    for s_idx in range(size_count):
-                        matrix_shell.modifyCell(s_idx, "MATNR1", str(qty))
-                    
-                    # Son satıra focus yap (Gerekiyorsa)
-                    matrix_shell.setCurrentCell(size_count - 1, "MATNR1")
+                    row_count = matrix_shell.RowCount
+                    if row_count == 0:
+                        logger.warning(f"CS01: Matris gridinde satır bulunamadı (comp_color: {comp_color}).")
+                        continue
+
+                    max_rows = min(size_count, row_count)
+                    possible_cols = ["MATNR1", "MATNR2", "MATNR3", "MATNR4", "MATNR5", "MATNR6"]
+                    working_col = None
+
+                    for s_idx in range(max_rows):
+                        cell_filled = False
+                        
+                        # 1. Önceden çalışan sütun varsa önce onu dene
+                        if working_col:
+                            try:
+                                matrix_shell.modifyCell(s_idx, working_col, str(qty))
+                                cell_filled = True
+                            except Exception:
+                                working_col = None
+
+                        # 2. Çalışan sütun henüz bulunamadıysa MATNR1..MATNR6 sırasıyla dene
+                        if not cell_filled:
+                            for col_name in possible_cols:
+                                try:
+                                    matrix_shell.modifyCell(s_idx, col_name, str(qty))
+                                    working_col = col_name
+                                    cell_filled = True
+                                    logger.debug(f"CS01: Satır {s_idx} için aktif sütun tespit edildi: {col_name}")
+                                    break
+                                except Exception:
+                                    continue
+                        
+                        if not cell_filled:
+                            logger.warning(f"CS01: Satır {s_idx} için MATNR1..MATNR6 arasında yazılabilir sütun bulunamadı.")
+
+                    # Son satıra ve bulunan aktif sütuna odaklan
+                    if max_rows > 0 and working_col:
+                        try:
+                            matrix_shell.setCurrentCell(max_rows - 1, working_col)
+                        except:
+                            pass
 
         # Bu PLM bitti, Onayla ve Ana Tabloya Dön
         session.findById("wnd[0]").sendVKey(0) 

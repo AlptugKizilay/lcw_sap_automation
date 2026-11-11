@@ -108,6 +108,7 @@ def run_full_sap_automation(siparis_kodu, published_label_id=61, country_id=None
         print(f"Uyarı: Sipariş Kodu {siparis_kodu} için OrderOptions API'den OptionId bulunamadı.")
 
     # --- 4. Adım: Çekilen Veriyi JSON Yapısına Dönüştür (ve Diğer API'leri Çağır) ---
+    auth_token = get_token_sync() or auth_token
     logger.info(_("LOG_CONVERTING_JSON"))
     json_output = transform_df_to_json(
         df_raw_data,
